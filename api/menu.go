@@ -1,16 +1,12 @@
 package api
 
 import (
-	"log"
-	"os"
-	"fmt"
+	"github.com/TechSir3n/CityCompanion/assistance"
 	_ "github.com/TechSir3n/CityCompanion/database"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
+	"log"
+	"os"
 )
-
-//if update.Message.Location == nil {
-//	bot.Send("Пожалуйста, поделитесь своими кординатами местоположения. Для поиска ближайщих выбранных вами мест")
-//}
 
 func CreateButton() {
 	bot, err := tgbotapi.NewBotAPI(os.Getenv("TELEGRAM_API_TOKEN"))
@@ -25,74 +21,193 @@ func CreateButton() {
 
 	updates, err := bot.GetUpdatesChan(u)
 	var msgN tgbotapi.MessageConfig
+	var msg tgbotapi.MessageConfig
 
 	for update := range updates {
 		if update.Message == nil {
 			continue
 		}
 
-		if update.CallbackQuery != nil {
-			callbackData := update.CallbackQuery.Data
-			switch callbackData {
-			case "action1":
-				fmt.Println("Here action1")
-			  // выполнение действий для кнопки "Парки-Атракционы"
-			// и так далее для всех кнопок
-			}
-		  } else { 
-			fmt.Println("Is nil")
-		  }
-		
-
 		switch update.Message.Text {
 		case "/start":
 			reply := "Добро пожаловать в CityCompanion! Я ваш надежный гид по городу. " +
 				"Просто отправьте мне свои координаты, и я помогу вам найти лучшие места в городе: от уютных кафе и ресторанов до кинотеатров и парков с аттракционами." +
 				"Отправляйте свои запросы, и я с радостью помогу вам насладиться лучшими местами в вашем городе! "
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
+			msg = tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 			msg.ReplyMarkup = createMainMenu()
 
 			bot.Send(msg)
+			break
 		case "❗️Показать меню":
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
 			msgN.ReplyMarkup = createNeedAction()
-
 			bot.Send(msgN)
+			break
 		case "📍 Поделится с кординатами местоположения":
-			setLocation(update)
-		default:
-			reply := "Я не понимаю, что вы говорите."
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
+			AskCoordinates(bot, update)
+			break
+		case "🔍 Настроить радиус поиска":
+			reply := "Желаете ли вы ограничить радиус поиска интересующих вас мест?" +
+				" Это позволить боту искать места, не превыщающие заданный радиус(расстояние),таким образом бот будет искать максимально приблежённые места от места вашего пребывания"
 
+			yesBTN := tgbotapi.NewKeyboardButton("Да")
+			noBTN := tgbotapi.NewKeyboardButton("Нет")
+
+			keyboard := tgbotapi.NewReplyKeyboard(
+				tgbotapi.NewKeyboardButtonRow(yesBTN, noBTN),
+			)
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
+			msg.ReplyMarkup = keyboard
 			bot.Send(msg)
+			break
+		case "/about":
+			assistance.AboutBot(bot, update)
+			break
+		case "/showmenu":
+			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
+			msgN.ReplyMarkup = createNeedAction()
+			bot.Send(msgN)
+
+			break
+		case "/sendlocation":
+			AskCoordinates(bot, update)
+			break
+		case "/adjustradius":
+			break
+
+		case "🍽️ Кафе-Рестораны":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🎡🎢 Парки-Атракционы":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "👨‍👩‍👧‍👦 Отдых с детьми":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🏝️ Пляжи":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🔍 Достопремечательности":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🎬 Просмотр фильмов":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🏋️‍♀️ Тренажерныe Залы":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🏃‍♀️ Cпорт площадки":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "🎤 Караоке":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "👩‍⚕️💉 Скорая помощь":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		case "💵 Банкоматы":
+			if isCoordinatesShared() {
+
+			} else {
+				assistance.WarningLocation(bot, update)
+			}
+
+			break
+
+		default:
+			handleRadiusResponse(bot, update,u)
+			handleGeocoding(bot, update)
+			break
 		}
 
 	}
 }
 
-func createNeedAction() tgbotapi.InlineKeyboardMarkup {
-	replyMarkup := tgbotapi.InlineKeyboardMarkup{
-		InlineKeyboard: [][]tgbotapi.InlineKeyboardButton{
+func createNeedAction() tgbotapi.ReplyKeyboardMarkup {
+	replyMarkup := tgbotapi.ReplyKeyboardMarkup{
+		Keyboard: [][]tgbotapi.KeyboardButton{
 			{
-				tgbotapi.NewInlineKeyboardButtonData("🍽️ Кафе-Рестораны", "action1"),
-				tgbotapi.NewInlineKeyboardButtonData("🎡🎢 Парки-Атракционы", "action2"),
-				tgbotapi.NewInlineKeyboardButtonData("👨‍👩‍👧‍👦 Отдых с детьми", "action3"),
+				tgbotapi.NewKeyboardButton("🍽️ Кафе-Рестораны"),
+				tgbotapi.NewKeyboardButton("🎡🎢 Парки-Атракционы"),
+				tgbotapi.NewKeyboardButton("👨‍👩‍👧‍👦 Отдых с детьми"),
 			},
 			{
-				tgbotapi.NewInlineKeyboardButtonData("🏝️ Пляжи", "action4"),
-				tgbotapi.NewInlineKeyboardButtonData("🔍 Достопремечательности", "action5"),
-				tgbotapi.NewInlineKeyboardButtonData("🎬 Просмотр фильмов", "action6"),
+				tgbotapi.NewKeyboardButton("🏝️ Пляжи"),
+				tgbotapi.NewKeyboardButton("🔍 Достопремечательности"),
+				tgbotapi.NewKeyboardButton("🎬 Просмотр фильмов"),
 			},
 			{
-				tgbotapi.NewInlineKeyboardButtonData("🏋️‍♀️ Тренажерныe Залы", "action7"),
-				tgbotapi.NewInlineKeyboardButtonData("🏃‍♀️ Cпорт площадки", "action8"),
-				tgbotapi.NewInlineKeyboardButtonData("🎤 Караоке", "action9"),
+				tgbotapi.NewKeyboardButton("🏋️‍♀️ Тренажерныe Залы"),
+				tgbotapi.NewKeyboardButton("🏃‍♀️ Cпорт площадки"),
+				tgbotapi.NewKeyboardButton("🎤 Караоке"),
 			},
 			{
-				tgbotapi.NewInlineKeyboardButtonData("👩‍⚕️💉 Скорая помощь", "action10"),
-				tgbotapi.NewInlineKeyboardButtonData("💵 Банкоматы", "action11"),
+				tgbotapi.NewKeyboardButton("👩‍⚕️💉 Скорая помощь"),
+				tgbotapi.NewKeyboardButton("💵 Банкоматы"),
 			},
 		},
+		ResizeKeyboard: true,
 	}
 
 	return replyMarkup
@@ -104,6 +219,7 @@ func createMainMenu() tgbotapi.ReplyKeyboardMarkup {
 			{
 				tgbotapi.NewKeyboardButton("❗️Показать меню"),
 				tgbotapi.NewKeyboardButton("📍 Поделится с кординатами местоположения"),
+				tgbotapi.NewKeyboardButton("🔍 Настроить радиус поиска"),
 			},
 		},
 		ResizeKeyboard: true,

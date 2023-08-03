@@ -1,9 +1,12 @@
-package app 
+package app
 
-import ( 
+import (
 	"github.com/TechSir3n/CityCompanion/api"
+	"github.com/TechSir3n/CityCompanion/database"
 )
 
-func StartTGBot() { 
-    api.CreateButton();
+func StartTGBot() {
+	database.ConnectDB()
+    api.CreateButton()
+	defer database.DB.Close()
 }
