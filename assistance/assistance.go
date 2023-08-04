@@ -1,7 +1,6 @@
 package assistance
 
 import (
-	"fmt"
 	"log"
 	"strconv"
 	"strings"
@@ -37,29 +36,26 @@ func AboutBot(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	}
 }
 
-func ParseRadius(radius string) {
+func ParseRadius(radius string) float64 {
 	if radius == "" {
-		return
+		return 0.0
 	}
 
+	var meter float64
 	if strings.HasSuffix(radius, "км") {
 		radius = strings.TrimSuffix(radius, "км")
-		num, err := strconv.ParseFloat(radius, 64)
-		if err != nil {
-			Error("Failed to parse radius to float64", err.Error())
-		} else {
-			meter := num * 1000
-			radius = strconv.Itoa(int(meter))
-		}
+		num, _ := strconv.ParseFloat(radius, 64)
+		meter = num * 1000
 
 	} else if strings.HasSuffix(radius, "м") {
 		radius = strings.TrimSuffix(radius, "м")
+		meter, _ = strconv.ParseFloat(radius, 64)
 	}
-
-	fmt.Println("Here1: ",radius)
+	return meter
 }
 
 func IsRadiusCorrect(radius string) bool {
+
 	if strings.HasSuffix(radius, "км") {
 		radius = strings.TrimSuffix(radius, "км")
 		num, err := strconv.ParseFloat(radius, 64)

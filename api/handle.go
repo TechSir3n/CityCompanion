@@ -3,12 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
-	"log"
-	"strings"
-
 	utils "github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"strings"
 )
 
 // we get here latitude and longitude user's
@@ -24,7 +22,7 @@ func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	userLocation := database.NewUserLocationImpl(database.DB)
 	err := userLocation.SaveUserLocation(context.Background(), latitude, longitude)
 	if err != nil {
-		log.Fatalf("Failed save user location: %v", err)
+		utils.Error("Failed to save location user: %v", err.Error())
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ваши кординаты успешно получены."+
@@ -32,7 +30,13 @@ func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	bot.Send(msg)
 }
 
-func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updConfig tgbotapi.UpdateConfig) {
+func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
+	if update.Message == nil || update.Message.Text == "" {
+		return
+	}
+
+	dbRadius := database.NewRadiusSearchImpl(database.DB)
+
 	if strings.Contains(update.Message.Text, "Да") {
 		reply := "Пожалуйста, введите радиус поиска, ограничивая его расстоянием в метрах или километрах,пример(1850м, 5км)"
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
@@ -41,27 +45,22 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updConfi
 		msg.ReplyMarkup = removeKeyboard
 		bot.Send(msg)
 
-		updates, err := bot.GetUpdates(updConfig)
-		if err != nil {
-			utils.Error("Failed to get updates", err.Error())
-			return
-		}
-
 		var radius string
-		for _, upd := range updates {
-			if upd.Message != nil && upd.Message.Chat.ID == update.Message.Chat.ID {
-				radius = upd.Message.Text
+		for u := range updates {
+			radius = u.Message.Text
+			if utils.IsRadiusCorrect(radius) {
+				meter := utils.ParseRadius(radius)
+				err := dbRadius.SaveRadiusSearch(context.Background(), meter)
+				if err != nil {
+					utils.Error("Save radius error: ", err.Error())
+				}
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Радиус успешно сохранен, и будет применён в поисках ближайщих мест")
+				bot.Send(msg)
 				break
+			} else {
+				msg := tgbotapi.NewMessage(u.Message.Chat.ID, "Вы ввели неверный формат радиуса. Пожалуйста, повторите попытку.")
+				bot.Send(msg)
 			}
-		}
-
-		fmt.Println("Radius: ", radius)
-
-		if utils.IsRadiusCorrect(radius) {
-			utils.ParseRadius(radius)
-		} else {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы ввели неверный формат радиуса")
-			bot.Send(msg)
 		}
 	} else if update.Message.Text == "Нет" {
 		reply := "Радиус поиска не будет ограничен"

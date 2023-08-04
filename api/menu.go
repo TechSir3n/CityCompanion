@@ -176,7 +176,7 @@ func CreateButton() {
 			break
 
 		default:
-			handleRadiusResponse(bot, update,u)
+			handleRadiusResponse(bot, update,updates)
 			handleGeocoding(bot, update)
 			break
 		}

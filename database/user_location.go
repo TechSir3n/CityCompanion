@@ -8,7 +8,11 @@ import (
 type UserLocation interface {
 	SaveUserLocation(ctx context.Context, latitude float64, longitude float64) error
 
-	GetUserLocation(ctx context.Context, user_id int64) (error, float64, float64)
+	GetUserLocation(ctx context.Context) (error, float64, float64)
+
+	UpdateUserLocation(ctx context.Context) error
+
+	DeleteUserLocation(ctx context.Context) error
 }
 
 type UserLocationImpl struct {
@@ -31,15 +35,14 @@ func (u *UserLocationImpl) SaveUserLocation(ctx context.Context, latitude float6
 }
 
 func (u *UserLocationImpl) GetUserLocation(ctx context.Context) (error, float64, float64) {
-	rows, err := u.DB.Query(`SELECT latitude,longitude FROM SaveLocation`) 
+	rows, err := u.DB.Query(`SELECT latitude,longitude FROM SaveLocation`)
 	if err != nil {
-		return err, 0.0,0.0
+		return err, 0.0, 0.0
 	}
 
 	defer rows.Close()
 
 	var lati, longi float64
-
 	for rows.Next() {
 		err := rows.Scan(&lati, &longi)
 		if err != nil {
@@ -52,4 +55,8 @@ func (u *UserLocationImpl) GetUserLocation(ctx context.Context) (error, float64,
 	}
 
 	return nil, lati, longi
+}
+
+func (u *UserLocationImpl) UpdateUserLocation(ctx context.Context) error {
+	return nil
 }

@@ -1,11 +1,11 @@
 package database
 
 import (
-	"database/sql"
 	"fmt"
-	"github.com/joho/godotenv"
+	utils "github.com/TechSir3n/CityCompanion/assistance"
 	_ "github.com/lib/pq"
-	"log"
+	"database/sql"
+	"github.com/joho/godotenv"
 	"os"
 	"path/filepath"
 )
@@ -13,11 +13,11 @@ import (
 func init() {
 	envFilePath, err := filepath.Abs(".env")
 	if err != nil {
-		log.Fatalf("Error[InitFunc]: %v", err)
+		utils.Fatal("Error[InitFunc]: %v", err)
 	}
 
 	if err := godotenv.Load(envFilePath); err != nil {
-		log.Fatalf("Error[InitFunc]: %v", err)
+		utils.Fatal("Error[InitFunc]: %v", err)
 	}
 }
 
@@ -35,16 +35,21 @@ func ConnectDB() {
 	var err error
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		log.Fatalf("[ConnectDB]: %v", err)
+		utils.Fatal("Failed open database %v", err)
 	}
 
 	err = DB.Ping()
 	if err != nil {
-		log.Fatalf("Bad connection to db: %v", err)
+		utils.Fatal("Bad connection to db: %v", err)
 	}
 
 	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,latitude FLOAT,longitude FLOAT)`)
 	if err != nil {
-		log.Fatalf("[ConnectDB]: %v ", err)
+		utils.Error("Failed to create table SaveLocation: %v ", err)
+	}
+
+	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,radius FLOAT)`)
+	if err != nil {
+		utils.Error("Failed to create table SaveRadius: %v ", err)
 	}
 }
