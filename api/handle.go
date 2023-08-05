@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"fmt"
 	utils "github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"

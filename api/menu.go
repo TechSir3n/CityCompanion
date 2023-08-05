@@ -37,150 +37,59 @@ func CreateButton() {
 			msg.ReplyMarkup = createMainMenu()
 
 			bot.Send(msg)
-			break
 		case "❗️Показать меню":
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
-			break
 		case "📍 Поделится с кординатами местоположения":
 			AskCoordinates(bot, update)
-			break
 		case "🔍 Настроить радиус поиска":
-			reply := "Желаете ли вы ограничить радиус поиска интересующих вас мест?" +
-				" Это позволить боту искать места, не превыщающие заданный радиус(расстояние),таким образом бот будет искать максимально приблежённые места от места вашего пребывания"
-
-			yesBTN := tgbotapi.NewKeyboardButton("Да")
-			noBTN := tgbotapi.NewKeyboardButton("Нет")
-
-			keyboard := tgbotapi.NewReplyKeyboard(
-				tgbotapi.NewKeyboardButtonRow(yesBTN, noBTN),
-			)
-
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
-			msg.ReplyMarkup = keyboard
-			bot.Send(msg)
-			break
+			assistance.AdjuctRadiusSearch(bot, update)
 		case "/about":
 			assistance.AboutBot(bot, update)
-			break
 		case "/showmenu":
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
-
-			break
 		case "/sendlocation":
 			AskCoordinates(bot, update)
-			break
 		case "/adjustradius":
-			break
-
-		case "🍽️ Кафе-Рестораны":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🎡🎢 Парки-Атракционы":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "👨‍👩‍👧‍👦 Отдых с детьми":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🏝️ Пляжи":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🔍 Достопремечательности":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🎬 Просмотр фильмов":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🏋️‍♀️ Тренажерныe Залы":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🏃‍♀️ Cпорт площадки":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "🎤 Караоке":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "👩‍⚕️💉 Скорая помощь":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
-		case "💵 Банкоматы":
-			if isCoordinatesShared() {
-
-			} else {
-				assistance.WarningLocation(bot, update)
-			}
-
-			break
-
+			assistance.AdjuctRadiusSearch(bot, update)
+		case "🍽️ Рестораны":
+			handlePlaceCategory(bot, update, updates, "13065")
+		case "🍵 Кафе, Кофейни и Чайные Дома":
+			handlePlaceCategory(bot, update, updates, "13032")
+		case "🛒 Розничная торговля продуктами питания и напитками":
+			handlePlaceCategory(bot, update, updates, "17142")
+		case "🏖️ Пляжи":
+			handlePlaceCategory(bot, update, updates, "16003")
+		case "🏛️ Достопремечательности":
+			handlePlaceCategory(bot, update, updates, "16000")
+		case "🌳 Городские парки":
+			handlePlaceCategory(bot, update, updates, "16032")
+		case "🏋️‍♀️ Тренажерный зал и студии":
+			handlePlaceCategory(bot, update, updates, "18021")
+		case "💆‍♀️ Услуги для здоровья и красоты":
+			handlePlaceCategory(bot, update, updates, "11061")
+		case "💇‍♂️ Парикмахерские":
+			handlePlaceCategory(bot, update, updates, "11062")
+		case "🛍️ Магазины одежды":
+			handlePlaceCategory(bot, update, updates, "17043")
+		case "🍻 Бары":
+			handlePlaceCategory(bot, update, updates, "13003")
 		default:
-			handleRadiusResponse(bot, update,updates)
+			handleRadiusResponse(bot, update, updates)
 			handleGeocoding(bot, update)
-			break
 		}
+	}
+}
 
+func handlePlaceCategory(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel, category string) {
+	limitPhoto, limitPlace := assistance.AskLimit(bot, update, updates)
+	if isCoordinatesShared() {
+		GetNearbyPlaces(limitPlace, limitPhoto, category, bot, update)
+	} else {
+		assistance.WarningLocation(bot, update)
 	}
 }
 
@@ -188,23 +97,23 @@ func createNeedAction() tgbotapi.ReplyKeyboardMarkup {
 	replyMarkup := tgbotapi.ReplyKeyboardMarkup{
 		Keyboard: [][]tgbotapi.KeyboardButton{
 			{
-				tgbotapi.NewKeyboardButton("🍽️ Кафе-Рестораны"),
-				tgbotapi.NewKeyboardButton("🎡🎢 Парки-Атракционы"),
-				tgbotapi.NewKeyboardButton("👨‍👩‍👧‍👦 Отдых с детьми"),
+				tgbotapi.NewKeyboardButton("🍽️ Рестораны"),
+				tgbotapi.NewKeyboardButton("🍵 Кафе, Кофейни и Чайные Дома"),
+				tgbotapi.NewKeyboardButton("🛒 Розничная торговля продуктами питания и напитками"),
 			},
 			{
-				tgbotapi.NewKeyboardButton("🏝️ Пляжи"),
-				tgbotapi.NewKeyboardButton("🔍 Достопремечательности"),
-				tgbotapi.NewKeyboardButton("🎬 Просмотр фильмов"),
+				tgbotapi.NewKeyboardButton("🏖️ Пляжи"),
+				tgbotapi.NewKeyboardButton("🏛️ Достопремечательности"),
+				tgbotapi.NewKeyboardButton("🌳 Городские парки"),
 			},
 			{
-				tgbotapi.NewKeyboardButton("🏋️‍♀️ Тренажерныe Залы"),
-				tgbotapi.NewKeyboardButton("🏃‍♀️ Cпорт площадки"),
-				tgbotapi.NewKeyboardButton("🎤 Караоке"),
+				tgbotapi.NewKeyboardButton("🏋️‍♀️ Тренажерный зал и студии"),
+				tgbotapi.NewKeyboardButton("💆‍♀️ Услуги для здоровья и красоты"),
+				tgbotapi.NewKeyboardButton("💇‍♂️ Парикмахерские"),
 			},
 			{
-				tgbotapi.NewKeyboardButton("👩‍⚕️💉 Скорая помощь"),
-				tgbotapi.NewKeyboardButton("💵 Банкоматы"),
+				tgbotapi.NewKeyboardButtonContact("🛍️ Магазины одежды"),
+				tgbotapi.NewKeyboardButton("🍻 Бары"),
 			},
 		},
 		ResizeKeyboard: true,
