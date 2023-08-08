@@ -1,7 +1,10 @@
 package api
 
 import (
+	"context"
+	"fmt"
 	"github.com/TechSir3n/CityCompanion/assistance"
+	"github.com/TechSir3n/CityCompanion/database"
 	_ "github.com/TechSir3n/CityCompanion/database"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
@@ -15,6 +18,7 @@ func CreateButton() {
 	}
 
 	bot.Debug = false
+	fmt.Printf("Authorized on account %s", bot.Self.UserName)
 
 	u := tgbotapi.NewUpdate(0)
 	u.Timeout = 60
@@ -53,30 +57,62 @@ func CreateButton() {
 			bot.Send(msgN)
 		case "/sendlocation":
 			AskCoordinates(bot, update)
+		case "/getmylocation":
+			street := GetUserStreet()
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
+			bot.Send(msg)
+		case "/favoriteplace":
+			f_db := database.NewFavoritePlacesImp(database.DB)
+			if names, addresses, err := f_db.GetFavoritePlaces(context.Background()); err != nil {
+				assistance.Error(err.Error())
+			} else {
+				var message string
+				for i := range names {
+					message += fmt.Sprintf("%d. %s - %s\n", i+1, names[i], addresses[i])
+				}
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+				bot.Send(msg)
+			}
+		case "/savedplaces":
+			s_db := database.NewSavedPlacesImpl(database.DB)
+			if names, addresses, err := s_db.GetSavePlaces(context.Background()); err != nil {
+				assistance.Error(err.Error())
+			} else {
+				var message string
+				for i := range names {
+					message += fmt.Sprintf("%d. %s - %s\n", i+1, names[i], addresses[i])
+				}
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+				bot.Send(msg)
+			}
 		case "/adjustradius":
 			assistance.AdjuctRadiusSearch(bot, update)
-		case "🍽️ Рестораны":
-			handlePlaceCategory(bot, update, updates, "13065")
-		case "🍵 Кафе, Кофейни и Чайные Дома":
-			handlePlaceCategory(bot, update, updates, "13032")
-		case "🛒 Розничная торговля продуктами питания и напитками":
-			handlePlaceCategory(bot, update, updates, "17142")
+		case "🍽️ Кафе-Рестораны":
+			handlePlaceCategory(bot, update, updates, "13000")
+		case "🍵 Кофейная-Чайная":
+			handlePlaceCategory(bot, update, updates, "13035")
+		case "🍣 Японская кухня":
+			handlePlaceCategory(bot, update, updates, "13276")
+		case "🏨 Отели":
+			handlePlaceCategory(bot, update, updates, "19014")
+		case "🍰 Кондитерские магазины":
+			handlePlaceCategory(bot, update, updates, "17057")
 		case "🏖️ Пляжи":
 			handlePlaceCategory(bot, update, updates, "16003")
-		case "🏛️ Достопремечательности":
-			handlePlaceCategory(bot, update, updates, "16000")
+		case "🏛️ Достопремечательности и природа":
+			handlePlaceCategory(bot, update, updates, "16020")
 		case "🌳 Городские парки":
 			handlePlaceCategory(bot, update, updates, "16032")
 		case "🏋️‍♀️ Тренажерный зал и студии":
-			handlePlaceCategory(bot, update, updates, "18021")
+			handlePlaceCategory(bot, update, updates, "19066")
 		case "💆‍♀️ Услуги для здоровья и красоты":
-			handlePlaceCategory(bot, update, updates, "11061")
-		case "💇‍♂️ Парикмахерские":
-			handlePlaceCategory(bot, update, updates, "11062")
-		case "🛍️ Магазины одежды":
-			handlePlaceCategory(bot, update, updates, "17043")
+			handlePlaceCategory(bot, update, updates, "17035")
+		case "⛪️ Церквки-Мечети":
+			handlePlaceCategory(bot, update, updates, "12106")
+		case "🛍️ Магазины":
+			handlePlaceCategory(bot, update, updates, "17096")
 		case "🍻 Бары":
-			handlePlaceCategory(bot, update, updates, "13003")
+			handlePlaceCategory(bot, update, updates, "13012")
 		default:
 			handleRadiusResponse(bot, update, updates)
 			handleGeocoding(bot, update)
@@ -87,7 +123,7 @@ func CreateButton() {
 func handlePlaceCategory(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel, category string) {
 	limitPhoto, limitPlace := assistance.AskLimit(bot, update, updates)
 	if isCoordinatesShared() {
-		GetNearbyPlaces(limitPlace, limitPhoto, category, bot, update)
+		GetNearbyPlaces(limitPlace, limitPhoto, category, bot, update, updates)
 	} else {
 		assistance.WarningLocation(bot, update)
 	}
@@ -97,27 +133,30 @@ func createNeedAction() tgbotapi.ReplyKeyboardMarkup {
 	replyMarkup := tgbotapi.ReplyKeyboardMarkup{
 		Keyboard: [][]tgbotapi.KeyboardButton{
 			{
-				tgbotapi.NewKeyboardButton("🍽️ Рестораны"),
-				tgbotapi.NewKeyboardButton("🍵 Кафе, Кофейни и Чайные Дома"),
-				tgbotapi.NewKeyboardButton("🛒 Розничная торговля продуктами питания и напитками"),
+				tgbotapi.NewKeyboardButton("🍽️ Кафе-Рестораны"),
+				tgbotapi.NewKeyboardButton("🍵 Кофейная-Чайная"),
+				tgbotapi.NewKeyboardButton("🍣 Японская кухня"),
 			},
 			{
 				tgbotapi.NewKeyboardButton("🏖️ Пляжи"),
-				tgbotapi.NewKeyboardButton("🏛️ Достопремечательности"),
+				tgbotapi.NewKeyboardButton("🏛️ Достопремечательности и природа"),
 				tgbotapi.NewKeyboardButton("🌳 Городские парки"),
 			},
 			{
 				tgbotapi.NewKeyboardButton("🏋️‍♀️ Тренажерный зал и студии"),
 				tgbotapi.NewKeyboardButton("💆‍♀️ Услуги для здоровья и красоты"),
-				tgbotapi.NewKeyboardButton("💇‍♂️ Парикмахерские"),
+				tgbotapi.NewKeyboardButton("⛪️ Церквки-Мечети"),
 			},
 			{
-				tgbotapi.NewKeyboardButtonContact("🛍️ Магазины одежды"),
+				tgbotapi.NewKeyboardButton("🛍️ Магазины"),
 				tgbotapi.NewKeyboardButton("🍻 Бары"),
+				tgbotapi.NewKeyboardButton("🍰 Кондитерские магазины"),
+				tgbotapi.NewKeyboardButton("🏨 Отели"),
 			},
 		},
 		ResizeKeyboard: true,
 	}
+	replyMarkup.OneTimeKeyboard = true
 
 	return replyMarkup
 }

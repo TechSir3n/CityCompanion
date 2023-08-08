@@ -27,13 +27,11 @@ func NewRadiusSearchImpl(db *sql.DB) *RadiusSearchImpl {
 }
 
 func (r *RadiusSearchImpl) SaveRadiusSearch(ctx context.Context, radius float64) error {
-	_, err := r.DB.Exec(`INSERT INTO SaveRadius(radius) VALUES($1)`, radius)
-	if err != nil {
-		return err
+	if _, err := r.DB.Exec(`INSERT INTO SaveRadius(radius) VALUES($1)`, radius);err!=nil {
+		return err 
 	}
 	return nil
 }
-
 
 func (r *RadiusSearchImpl) GetRadiusSearch(ctx context.Context) (error, float64) {
 	rows, err := r.DB.Query(`SELECT radius FROM SaveRadius`)

@@ -1,11 +1,11 @@
 package database
 
 import (
+	"database/sql"
 	"fmt"
 	utils "github.com/TechSir3n/CityCompanion/assistance"
-	_ "github.com/lib/pq"
-	"database/sql"
 	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"os"
 	"path/filepath"
 )
@@ -38,18 +38,27 @@ func ConnectDB() {
 		utils.Fatal("Failed open database %v", err)
 	}
 
-	err = DB.Ping()
-	if err != nil {
-		utils.Fatal("Bad connection to db: %v", err)
+	if err = DB.Ping(); err != nil {
+		utils.Error("Bad database connection: ", err.Error)
 	}
 
-	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,latitude FLOAT,longitude FLOAT)`)
-	if err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,latitude FLOAT,longitude FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveLocation: %v ", err)
+		return
 	}
 
-	_, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,radius FLOAT)`)
-	if err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,radius FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveRadius: %v ", err)
+		return
+	}
+
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SavePlace(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233))`); err != nil {
+		utils.Error("Failed to create table SavePlace: %v ", err)
+		return
+	}
+
+	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SaveFavoritePlace(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233))`); err != nil {
+		utils.Error("Failed to create table SaveFavoritePlace: %v ", err)
+		return
 	}
 }

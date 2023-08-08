@@ -80,7 +80,7 @@ func AskLimit(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.Upd
 		}
 	}
 
-	return 2,limitPlace
+	return 1,limitPlace
 }
 
 func AdjuctRadiusSearch(bot *tgbotapi.BotAPI, update tgbotapi.Update) {

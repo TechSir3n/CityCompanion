@@ -43,10 +43,10 @@ func getPhotosPlaces(limit int64, fsqID string) ([]string, error) {
 		return nil, err
 	}
 
-	var photoURLs []string
+	var photoURLs = make([]string,len(photos))
 	for _, photo := range photos {
 		photoURL := fmt.Sprintf("%s%s%s", photo.Prefix, "original", photo.Suffix)
-		photoURLs = append(photoURLs, photoURL)
+		photoURLs = append(photoURLs,photoURL)
 	}
 
 	return photoURLs, nil

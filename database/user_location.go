@@ -26,11 +26,9 @@ func NewUserLocationImpl(db *sql.DB) *UserLocationImpl {
 }
 
 func (u *UserLocationImpl) SaveUserLocation(ctx context.Context, latitude float64, longitude float64) error {
-	_, err := u.DB.Exec(`INSERT INTO SaveLocation(latitude,longitude) VALUES($1,$2)`, latitude, longitude)
-	if err != nil {
-		return err
+	if _, err := u.DB.Exec(`INSERT INTO SaveLocation(latitude,longitude) VALUES($1,$2)`, latitude, longitude);err!=nil { 
+		return err 
 	}
-
 	return nil
 }
 

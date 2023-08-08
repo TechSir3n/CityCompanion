@@ -83,3 +83,4 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 		bot.Send(msg)
 	}
 }
+
