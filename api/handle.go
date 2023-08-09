@@ -84,3 +84,23 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 	}
 }
 
+func handleButton(update tgbotapi.Update) int64 {
+	callback := update.CallbackQuery
+	if callback == nil {
+		return 0
+	}
+
+	switch callback.Data {
+	case "1":
+		return 1
+	case "2":
+		return 2
+	case "3":
+		return 3
+	case "4":
+		return 4
+	case "5":
+		return 5
+	}
+	return 0
+}

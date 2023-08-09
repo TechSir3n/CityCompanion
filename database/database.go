@@ -42,23 +42,33 @@ func ConnectDB() {
 		utils.Error("Bad database connection: ", err.Error)
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,latitude FLOAT,longitude FLOAT)`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,
+		latitude FLOAT,longitude FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveLocation: %v ", err)
 		return
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,radius FLOAT)`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,
+		radius FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveRadius: %v ", err)
 		return
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SavePlace(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233))`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SavePlace(id SERIAL PRIMARY KEY,
+		name VARCHAR(233),address VARCHAR(233))`); err != nil {
 		utils.Error("Failed to create table SavePlace: %v ", err)
 		return
 	}
 
-	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SaveFavoritePlace(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233))`); err != nil {
+	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SaveFavoritePlace(id SERIAL PRIMARY KEY,
+		name VARCHAR(233),address VARCHAR(233))`); err != nil {
 		utils.Error("Failed to create table SaveFavoritePlace: %v ", err)
+		return
+	}
+
+	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS Reviews(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233),userName VARCHAR(50),
+	rating INTEGER,comment TEXT,created_at TIMESTAMP)`); err != nil {
+		utils.Error("Failed to create table Reviews: %v", err)
 		return
 	}
 }

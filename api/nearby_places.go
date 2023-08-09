@@ -12,6 +12,7 @@ import (
 	"time"
 
 	utils "github.com/TechSir3n/CityCompanion/assistance"
+	"github.com/TechSir3n/CityCompanion/cache"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
@@ -55,6 +56,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 		messageText.WriteString(fmt.Sprintf("Адрес: %s\n", location.Location.Address))
 		messageText.WriteString(fmt.Sprintf("Расстояние: %d \n", location.Distance))
 		photoURL, err := getPhotosPlaces(limitPhotos, location.FsqID)
+		fmt.Println("fs: ", location.FsqID)
 		if err != nil {
 			utils.Error(err.Error())
 		} else {
@@ -67,8 +69,13 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Подробнее о местах", "button1"),
+			tgbotapi.NewInlineKeyboardButtonData("Подробнее о местe", "button1"),
 			tgbotapi.NewInlineKeyboardButtonData("Показать на карте", "button2"),
+		),
+
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Посмотреть отзывы места", "button3"),
+			tgbotapi.NewInlineKeyboardButtonData("Оставить отзыв о месте", "button4"),
 		),
 	)
 
@@ -87,23 +94,18 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 	msg2.ReplyMarkup = replyKeyboard
 	bot.Send(msg2)
 
-	var detailInfo string
 	for upd := range updates {
 		if upd.CallbackQuery != nil && upd.CallbackQuery.Data != "" {
 			switch upd.CallbackQuery.Data {
 			case "button1":
-				for _, location := range locations {
-					detailInfo += fmt.Sprintf("Перекресток: %s\n", location.Location.CrossStreet)
-					detailInfo += fmt.Sprintf("Местонохождение: %s\n", location.Location.Locality)
-					detailInfo += fmt.Sprintf("Регион: %s\n", location.Location.Region)
-					detailInfo += fmt.Sprintf("Страна: %s\n", location.Location.Country)
-					detailInfo += fmt.Sprintf("Почтовый индекс: %s\n", location.Location.PostCode)
-					detailInfo += "\n"
-				}
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, detailInfo)
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места:")
 				if _, err := bot.Send(msg); err != nil {
 					return
 				}
+
+				place := make(chan string)
+				waitInputUser(place, updates)
+				detailAboutPlace(bot, update.Message.Chat.ID, <-place, locations)
 				break
 			case "button2":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места из списка предыдущих мест:")
@@ -111,27 +113,12 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 					return
 				}
 
-				place := make(chan string)
-
-				go func() {
-					for {
-						select {
-						case input := <-updates:
-							if input.Message != nil {
-								place <- input.Message.Text
-								break
-							}
-						case <-time.After(30 * time.Second):
-							break
-						}
-					}
-				}()
-
 				found := false
-				enteredName := <-place
+				place := make(chan string)
+				waitInputUser(place, updates)
 
 				for _, location := range locations {
-					if enteredName == location.Name {
+					if <-place == location.Name {
 						msg := tgbotapi.NewLocation(update.Message.Chat.ID,
 							location.Geocodes.Main.Latitude, location.Geocodes.Main.Longitude)
 						if _, err := bot.Send(msg); err != nil {
@@ -148,7 +135,24 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 						return
 					}
 				}
+
+			case "button3":
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места для получения отзывов о нём: ")
+				bot.Send(msg)
+
+				place := make(chan string)
+				waitInputUser(place, updates)
+				checkReviewOfThePlace(bot,update.Message.Chat.ID, place,locations)
+
+			case "button4":
+				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите место в котором хотите оставить свой отзыв: ")
+				bot.Send(msg)
+
+				place := make(chan string)
+				waitInputUser(place, updates)
+				leftReviewOfThePlace(bot, update.Message.Chat.ID, updates, update, place, locations)
 			}
+
 		} else if update.Message != nil && update.Message.Text != "" {
 			switch upd.Message.Text {
 			case "Сохранить место":
@@ -158,22 +162,8 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				go func() {
-					for {
-						select {
-						case input := <-updates:
-							if input.Message != nil {
-								place <- input.Message.Text
-								break
-							}
-						case <-time.After(time.Second * 30):
-							break
-						}
-					}
-				}()
-
-				placeName := <-place
-				savePlace(bot, update.Message.Chat.ID, placeName, locations)
+				waitInputUser(place, updates)
+				savePlace(bot, update.Message.Chat.ID, <-place, locations)
 			case "Добавить в избранное":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места которое хотите добавить в израбнное.")
 				if _, err := bot.Send(msg); err != nil {
@@ -181,61 +171,54 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				go func() {
-					for {
-						select {
-						case input := <-updates:
-							if input.Message != nil {
-								place <- input.Message.Text
-								break
-							}
-						case <-time.After(time.Second * 30):
-							break
-						}
-					}
-				}()
-				placeName := <-place
-				saveFavoritePlace(bot, update.Message.Chat.ID, placeName, locations)
+				waitInputUser(place, updates)
+				saveFavoritePlace(bot, update.Message.Chat.ID, <-place, locations)
 			}
 		}
 	}
 }
 
-func savePlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, locations []Location) {
-	found := false
-	db := database.NewSavedPlacesImpl(database.DB)
-	for _, location := range locations {
-		if placeName == location.Name {
-			db.SavePlace(context.Background(), location.Name, location.Location.Address)
-			msg := tgbotapi.NewMessage(chatID, "Отлично,место успешно сохранено")
-			bot.Send(msg)
-			found = true
-			return
+func waitInputUser(place chan string, updates tgbotapi.UpdatesChannel) {
+	go func() {
+		for {
+			select {
+			case input := <-updates:
+				if input.Message != nil {
+					place <- input.Message.Text
+					return
+				}
+			case <-time.After(time.Second * 30):
+				place <- ""
+				return
+			}
 		}
-	}
-
-	if !found {
-		msg := tgbotapi.NewMessage(chatID, "Простите,но такого мест нет в спискe.")
-		bot.Send(msg)
-	}
+	}()
 }
 
-func saveFavoritePlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, locations []Location) {
+func detailAboutPlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, locations []Location) {
+	var messageText bytes.Buffer
 	found := false
-	db := database.NewFavoritePlacesImp(database.DB)
 	for _, location := range locations {
 		if placeName == location.Name {
-			db.SaveFavoritePlace(context.Background(), location.Name, location.Location.Address)
-			msg := tgbotapi.NewMessage(chatID, "Отлично,место успешно добавлено в избранное")
-			bot.Send(msg)
+			messageText.WriteString(fmt.Sprintf("Местонохождение: %s\n", location.Location.Locality))
+			messageText.WriteString(fmt.Sprintf("Регион: %s\n", location.Location.Region))
+			messageText.WriteString(fmt.Sprintf("Перекресток улицы: %s\n", location.Location.CrossStreet))
+			messageText.WriteString(fmt.Sprintf("Страна: %s\n", location.Location.Country))
+			messageText.WriteString(fmt.Sprintf("Почтовый индекс: %s\n", location.Location.PostCode))
+			messageText.WriteString("\n")
 			found = true
-			return
 		}
 	}
 
 	if !found {
-		msg := tgbotapi.NewMessage(chatID, "Простите,но такого мест нет в спискe.")
+		msg := tgbotapi.NewMessage(chatID, "Такого места нет в списке,будьте внимательны.")
 		bot.Send(msg)
+	}
+
+	result := messageText.String()
+	msg := tgbotapi.NewMessage(chatID, result)
+	if _, err := bot.Send(msg); err != nil {
+		return
 	}
 }
 
@@ -255,11 +238,17 @@ func buildQueryURL(limit int64, latitude, longitude float64, categoryID string) 
 	queryParams.Set("oauth_token", os.Getenv("API_TOKEN"))
 	queryParams.Set("limit", strconv.FormatInt(limit, 10))
 	queryParams.Set("sort", "distance")
+	queryParams.Set("open_now","true")
 
 	return fmt.Sprintf("%s?%s", os.Getenv("API_URLSEARCHPLACE"), queryParams.Encode())
 }
 
 func searchPlaces(queryURL string) ([]Location, error) {
+	c := cache.NewCache()
+	if cacheData, found := c.Get(queryURL); found {
+		return cacheData.([]Location), nil
+	}
+
 	req, err := http.NewRequest("GET", queryURL, nil)
 	if err != nil {
 		utils.Error("Failed to send request: %v", err)
@@ -280,6 +269,8 @@ func searchPlaces(queryURL string) ([]Location, error) {
 	if err != nil {
 		return nil, err
 	}
-	
+
+	c.Set(queryURL, response.Results, time.Minute*5)
+
 	return response.Results, nil
 }

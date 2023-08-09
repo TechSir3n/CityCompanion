@@ -46,7 +46,7 @@ func CreateButton() {
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
 		case "📍 Поделится с кординатами местоположения":
-			AskCoordinates(bot, update)
+			AskCoordinates(bot, update,updates)
 		case "🔍 Настроить радиус поиска":
 			assistance.AdjuctRadiusSearch(bot, update)
 		case "/about":
@@ -56,7 +56,7 @@ func CreateButton() {
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
 		case "/sendlocation":
-			AskCoordinates(bot, update)
+			AskCoordinates(bot, update,updates)
 		case "/getmylocation":
 			street := GetUserStreet()
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
@@ -157,7 +157,6 @@ func createNeedAction() tgbotapi.ReplyKeyboardMarkup {
 		ResizeKeyboard: true,
 	}
 	replyMarkup.OneTimeKeyboard = true
-
 	return replyMarkup
 }
 

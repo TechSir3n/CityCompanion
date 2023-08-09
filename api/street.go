@@ -63,7 +63,7 @@ func GetCoordinates() (float64, float64) {
 	userLocation := database.NewUserLocationImpl(database.DB)
 	err, latitude, longitude := userLocation.GetUserLocation(context.Background())
 	if err != nil {
-	
+		
 	}
 
 	return latitude, longitude
