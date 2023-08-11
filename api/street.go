@@ -59,11 +59,13 @@ func GetUserStreet() string {
 	return address
 }
 
+
+
 func GetCoordinates() (float64, float64) {
 	userLocation := database.NewUserLocationImpl(database.DB)
 	err, latitude, longitude := userLocation.GetUserLocation(context.Background())
 	if err != nil {
-		
+		return 0.0,0.0
 	}
 
 	return latitude, longitude

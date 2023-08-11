@@ -5,6 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
+	"unicode"
 )
 
 func WarningLocation(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
@@ -35,7 +36,7 @@ func AboutBot(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	}
 }
 
-func AskLimit(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) (int64,int64) {
+func AskLimit(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) (int64, int64) {
 	reply := "Пожалуйста, укажите максимальное количество мест, которое вы бы хотели видеть в списке:"
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
@@ -80,7 +81,7 @@ func AskLimit(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.Upd
 		}
 	}
 
-	return 1,limitPlace
+	return 1, limitPlace
 }
 
 func AdjuctRadiusSearch(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
@@ -115,6 +116,15 @@ func ParseRadius(radius string) float64 {
 		meter, _ = strconv.ParseFloat(radius, 64)
 	}
 	return meter
+}
+
+func IsRussianWord(word string) bool {
+	for _, c := range word {
+		if !unicode.Is(unicode.Cyrillic, c) {
+			return false
+		}
+	}
+	return true
 }
 
 func IsRadiusCorrect(radius string) bool {

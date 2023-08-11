@@ -55,10 +55,12 @@ func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbota
 			waitInputUser(city, updates)
 			db := database.NewUserLocationImpl(database.DB)
 
-			if latitude, longitude, err := GetCordinatesByCity(<-city); err != nil {
+			if latitude, longitude, err := GetCordinatesByCity(<-city); err != nil ||
+				longitude == 0.0 && latitude == 0.0 {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не удалось определить кординаты вашего города,попробуйте ещё раз или"+
 					"проверти корректность веденного вами города")
 				bot.Send(msg)
+				return
 			} else {
 				db.SaveUserLocation(context.Background(), latitude, longitude)
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Благодарим,кординаты вашего города успешно получены, и сохранены !")
