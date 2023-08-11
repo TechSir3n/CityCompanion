@@ -5,7 +5,7 @@ import (
 	"log"
 	"strconv"
 	"strings"
-	"unicode"
+
 )
 
 func WarningLocation(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
@@ -118,34 +118,3 @@ func ParseRadius(radius string) float64 {
 	return meter
 }
 
-func IsRussianWord(word string) bool {
-	for _, c := range word {
-		if !unicode.Is(unicode.Cyrillic, c) {
-			return false
-		}
-	}
-	return true
-}
-
-func IsRadiusCorrect(radius string) bool {
-	if strings.HasSuffix(radius, "км") {
-		radius = strings.TrimSuffix(radius, "км")
-		num, err := strconv.ParseFloat(radius, 64)
-		if err != nil {
-			return false
-		} else if num < 0 {
-			return false
-		}
-		return true
-	} else if strings.HasSuffix(radius, "м") {
-		radius = strings.TrimSuffix(radius, "м")
-		num, err := strconv.ParseFloat(radius, 64)
-		if err != nil {
-			return false
-		} else if num < 0 {
-			return false
-		}
-		return true
-	}
-	return false
-}

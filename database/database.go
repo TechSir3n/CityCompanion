@@ -42,8 +42,8 @@ func ConnectDB() {
 		utils.Error("Bad database connection: ", err.Error)
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveLocation(id  SERIAL PRIMARY KEY,
-		latitude FLOAT,longitude FLOAT)`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS UserLocation(id  SERIAL PRIMARY KEY,
+		userID INTEGER NOT NULL ,latitude FLOAT,longitude FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveLocation: %v ", err)
 		return
 	}

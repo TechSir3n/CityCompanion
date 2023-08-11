@@ -2,9 +2,11 @@ package api
 
 import (
 	"encoding/json"
-	"github.com/TechSir3n/CityCompanion/assistance"
+	"fmt"
 	"net/http"
 	"os"
+
+	"github.com/TechSir3n/CityCompanion/assistance"
 )
 
 type Context struct {
@@ -20,7 +22,7 @@ type Context struct {
 	} `json:"context"`
 }
 
-func GetCordinatesByCity(cityName string) (float64, float64, error) {
+func getCordinatesByCity(cityName string) (float64, float64, error) {
 	if cityName == "" {
 		return 0.0, 0.0, nil
 	}
@@ -32,8 +34,7 @@ func GetCordinatesByCity(cityName string) (float64, float64, error) {
 		city = cityName
 	}
 
-	url := "https://api.foursquare.com/v3/places/search?near=" + city
-
+	url := fmt.Sprintf("https://api.foursquare.com/v3/places/search?near=%s", city)
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Add("accept", "application/json")
 	req.Header.Add("authorization", os.Getenv("API_TOKEN"))

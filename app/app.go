@@ -8,5 +8,6 @@ import (
 func StartTGBot() {
 	database.ConnectDB()
 	api.CreateButton()
+
 	defer database.DB.Close()
 }

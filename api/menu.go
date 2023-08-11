@@ -58,7 +58,7 @@ func CreateButton() {
 		case "/sendlocation":
 			AskCoordinates(bot, update,updates)
 		case "/getmylocation":
-			street := GetUserStreet()
+			street := GetUserStreet(update.Message.Chat.ID)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
 			bot.Send(msg)
 		case "/favoriteplace":
@@ -122,7 +122,7 @@ func CreateButton() {
 
 func handlePlaceCategory(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel, category string) {
 	limitPhoto, limitPlace := assistance.AskLimit(bot, update, updates)
-	if isCoordinatesShared() {
+	if isCoordinatesShared(update.Message.Chat.ID) {
 		GetNearbyPlaces(limitPlace, limitPhoto, category, bot, update, updates)
 	} else {
 		assistance.WarningLocation(bot, update)

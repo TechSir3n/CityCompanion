@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-// we get here latitude and longitude user's
+
 func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	if update.Message == nil || update.Message.Location == nil {
 		return
@@ -19,7 +19,7 @@ func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	longitude := location.Longitude
 
 	userLocation := database.NewUserLocationImpl(database.DB)
-	err := userLocation.SaveUserLocation(context.Background(), latitude, longitude)
+	err := userLocation.SaveUserLocation(context.Background(),update.Message.Chat.ID, latitude, longitude)
 	if err != nil {
 		utils.Error("Failed to save location user: %v", err.Error())
 	}
@@ -79,28 +79,9 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 			tgbotapi.NewKeyboardButtonRow(yesBTN, noBTN),
 		)
 
+		keyboard.OneTimeKeyboard = true 
+
 		msg.ReplyMarkup = keyboard
 		bot.Send(msg)
 	}
-}
-
-func handleButton(update tgbotapi.Update) int64 {
-	callback := update.CallbackQuery
-	if callback == nil {
-		return 0
-	}
-
-	switch callback.Data {
-	case "1":
-		return 1
-	case "2":
-		return 2
-	case "3":
-		return 3
-	case "4":
-		return 4
-	case "5":
-		return 5
-	}
-	return 0
 }

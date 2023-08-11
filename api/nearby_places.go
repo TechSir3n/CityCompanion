@@ -43,7 +43,7 @@ type Location struct {
 
 func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgbotapi.BotAPI,
 	update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
-	latitude, longitude := GetCoordinates()
+	latitude, longitude := GetCoordinates(update.Message.Chat.ID)
 	queryURL := buildQueryURL(limitSearch, latitude, longitude, categoryID)
 	locations, err := searchPlaces(queryURL)
 	if err != nil {
