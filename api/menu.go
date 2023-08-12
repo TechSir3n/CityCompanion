@@ -39,7 +39,6 @@ func CreateButton() {
 				"Отправляйте свои запросы, и я с радостью помогу вам насладиться лучшими местами в вашем городе! "
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 			msg.ReplyMarkup = createMainMenu()
-
 			bot.Send(msg)
 		case "❗️Показать меню":
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
@@ -63,7 +62,7 @@ func CreateButton() {
 			bot.Send(msg)
 		case "/favoriteplace":
 			f_db := database.NewFavoritePlacesImp(database.DB)
-			if names, addresses, err := f_db.GetFavoritePlaces(context.Background()); err != nil {
+			if names, addresses, err := f_db.GetFavoritePlaces(context.Background(),update.Message.Chat.ID); err != nil {
 				assistance.Error(err.Error())
 			} else {
 				var message string
@@ -75,7 +74,7 @@ func CreateButton() {
 			}
 		case "/savedplaces":
 			s_db := database.NewSavedPlacesImpl(database.DB)
-			if names, addresses, err := s_db.GetSavePlaces(context.Background()); err != nil {
+			if names, addresses, err := s_db.GetSavePlaces(context.Background(),update.Message.Chat.ID); err != nil {
 				assistance.Error(err.Error())
 			} else {
 				var message string
@@ -114,7 +113,7 @@ func CreateButton() {
 		case "🍻 Бары":
 			handlePlaceCategory(bot, update, updates, "13012")
 		default:
-			handleRadiusResponse(bot, update, updates)
+			handleRadiusResponse(bot, update,updates)
 			handleGeocoding(bot, update)
 		}
 	}

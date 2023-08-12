@@ -44,7 +44,7 @@ type Location struct {
 func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgbotapi.BotAPI,
 	update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
 	latitude, longitude := GetCoordinates(update.Message.Chat.ID)
-	queryURL := buildQueryURL(limitSearch, latitude, longitude, categoryID)
+	queryURL := buildQueryURL(limitSearch, latitude, longitude, categoryID, update.Message.Chat.ID)
 	locations, err := searchPlaces(queryURL)
 	if err != nil {
 		utils.Fatal(err)
@@ -56,7 +56,6 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 		messageText.WriteString(fmt.Sprintf("Адрес: %s\n", location.Location.Address))
 		messageText.WriteString(fmt.Sprintf("Расстояние: %d \n", location.Distance))
 		photoURL, err := getPhotosPlaces(limitPhotos, location.FsqID)
-		fmt.Println("fs: ", location.FsqID)
 		if err != nil {
 			utils.Error(err.Error())
 		} else {
@@ -94,6 +93,8 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 	msg2.ReplyMarkup = replyKeyboard
 	bot.Send(msg2)
 
+	errCh := make(chan string)
+
 	for upd := range updates {
 		if upd.CallbackQuery != nil && upd.CallbackQuery.Data != "" {
 			switch upd.CallbackQuery.Data {
@@ -104,7 +105,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place, updates)
+				waitInputUser(place,errCh, updates)
 				detailAboutPlace(bot, update.Message.Chat.ID, <-place, locations)
 				break
 			case "button2":
@@ -113,43 +114,24 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 					return
 				}
 
-				found := false
 				place := make(chan string)
-				waitInputUser(place, updates)
-
-				for _, location := range locations {
-					if <-place == location.Name {
-						msg := tgbotapi.NewLocation(update.Message.Chat.ID,
-							location.Geocodes.Main.Latitude, location.Geocodes.Main.Longitude)
-						if _, err := bot.Send(msg); err != nil {
-							return
-						}
-						found = true
-						return
-					}
-				}
-
-				if !found {
-					msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Простите,но такого мест нет в спискe.")
-					if _, err := bot.Send(msg); err != nil {
-						return
-					}
-				}
+				waitInputUser(place,errCh, updates)
+				showInMap(<-place, bot, update.Message.Chat.ID, locations)
 
 			case "button3":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места для получения отзывов о нём: ")
 				bot.Send(msg)
 
 				place := make(chan string)
-				waitInputUser(place, updates)
-				checkReviewOfThePlace(bot,update.Message.Chat.ID, place,locations)
+				waitInputUser(place, errCh,updates)
+				checkReviewOfThePlace(bot, update.Message.Chat.ID, place, locations)
 
 			case "button4":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите место в котором хотите оставить свой отзыв: ")
 				bot.Send(msg)
 
 				place := make(chan string)
-				waitInputUser(place, updates)
+				waitInputUser(place,errCh, updates)
 				leftReviewOfThePlace(bot, update.Message.Chat.ID, updates, update, place, locations)
 			}
 
@@ -162,8 +144,9 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place, updates)
+				waitInputUser(place,errCh, updates)
 				savePlace(bot, update.Message.Chat.ID, <-place, locations)
+
 			case "Добавить в избранное":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места которое хотите добавить в израбнное.")
 				if _, err := bot.Send(msg); err != nil {
@@ -171,14 +154,14 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place, updates)
+				waitInputUser(place,errCh,updates)
 				saveFavoritePlace(bot, update.Message.Chat.ID, <-place, locations)
 			}
 		}
 	}
 }
 
-func waitInputUser(place chan string, updates tgbotapi.UpdatesChannel) {
+func waitInputUser(place chan string, errCh chan string, updates tgbotapi.UpdatesChannel) {
 	go func() {
 		for {
 			select {
@@ -190,6 +173,11 @@ func waitInputUser(place chan string, updates tgbotapi.UpdatesChannel) {
 			case <-time.After(time.Second * 30):
 				place <- ""
 				return
+			case err := <-errCh:
+				if err == "Произошла ошибка" {
+					place <- ""
+					return
+				}
 			}
 		}
 	}()
@@ -222,9 +210,9 @@ func detailAboutPlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, loca
 	}
 }
 
-func buildQueryURL(limit int64, latitude, longitude float64, categoryID string) string {
+func buildQueryURL(limit int64, latitude, longitude float64, categoryID string, userID int64) string {
 	dbRadius := database.NewRadiusSearchImpl(database.DB)
-	err, radius := dbRadius.GetRadiusSearch(context.Background())
+	err, radius := dbRadius.GetRadiusSearch(context.Background(), userID)
 	if err != nil {
 		utils.Error("Failed to get radius user's")
 	}
@@ -238,7 +226,7 @@ func buildQueryURL(limit int64, latitude, longitude float64, categoryID string) 
 	queryParams.Set("oauth_token", os.Getenv("API_TOKEN"))
 	queryParams.Set("limit", strconv.FormatInt(limit, 10))
 	queryParams.Set("sort", "distance")
-	queryParams.Set("open_now","true")
+	queryParams.Set("open_now", "true")
 
 	return fmt.Sprintf("%s?%s", os.Getenv("API_URLSEARCHPLACE"), queryParams.Encode())
 }

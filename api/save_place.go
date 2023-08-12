@@ -11,7 +11,7 @@ func savePlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, locations [
 	db := database.NewSavedPlacesImpl(database.DB)
 	for _, location := range locations {
 		if placeName == location.Name {
-			db.SavePlace(context.Background(), location.Name, location.Location.Address)
+			db.SavePlace(context.Background(), chatID, location.Name, location.Location.Address)
 			msg := tgbotapi.NewMessage(chatID, "Отлично,место успешно сохранено")
 			bot.Send(msg)
 			found = true
@@ -30,7 +30,7 @@ func saveFavoritePlace(bot *tgbotapi.BotAPI, chatID int64, placeName string, loc
 	db := database.NewFavoritePlacesImp(database.DB)
 	for _, location := range locations {
 		if placeName == location.Name {
-			db.SaveFavoritePlace(context.Background(), location.Name, location.Location.Address)
+			db.SaveFavoritePlace(context.Background(), chatID, location.Name, location.Location.Address)
 			msg := tgbotapi.NewMessage(chatID, "Отлично,место успешно добавлено в избранное")
 			bot.Send(msg)
 			found = true

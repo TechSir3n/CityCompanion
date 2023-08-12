@@ -5,9 +5,8 @@ import (
 	utils "github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
-	"strings"
+	"strconv"
 )
-
 
 func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	if update.Message == nil || update.Message.Location == nil {
@@ -19,7 +18,7 @@ func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	longitude := location.Longitude
 
 	userLocation := database.NewUserLocationImpl(database.DB)
-	err := userLocation.SaveUserLocation(context.Background(),update.Message.Chat.ID, latitude, longitude)
+	err := userLocation.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude)
 	if err != nil {
 		utils.Error("Failed to save location user: %v", err.Error())
 	}
@@ -36,52 +35,54 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 
 	dbRadius := database.NewRadiusSearchImpl(database.DB)
 
-	if strings.Contains(update.Message.Text, "Да") {
-		reply := "Пожалуйста, введите радиус поиска, ограничивая его расстоянием в метрах или километрах,пример(1850м, 5км)"
+	switch update.Message.Text {
+	case "Да":
+		reply := "Пожалуйста, введите радиус поиска, ограничивая его расстоянием в метрах или километрах, пример (1850м, 5км)"
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 
 		removeKeyboard := tgbotapi.NewRemoveKeyboard(true)
 		msg.ReplyMarkup = removeKeyboard
 		bot.Send(msg)
 
-		var radius string
-		for u := range updates {
-			radius = u.Message.Text
-			if utils.IsRadiusCorrect(radius) {
-				meter := utils.ParseRadius(radius)
-				err := dbRadius.SaveRadiusSearch(context.Background(), meter)
-				if err != nil {
-					utils.Error("Save radius error: ", err.Error())
+		radiusInput := make(chan string)
+		waitInputUser(radiusInput, make(chan string), updates)
+		radius := <-radiusInput
+
+		if utils.IsRadiusCorrect(radius) {
+			meter := utils.ParseRadius(radius)
+			_, prevRadius := dbRadius.GetRadiusSearch(context.Background(), update.Message.Chat.ID)
+			if prevRadius != 0.0{
+				if radiusInt, err := strconv.Atoi(radius); err == nil {
+					radiusUp := float64(radiusInt)
+					if err = dbRadius.UpdateRadiusSearch(context.Background(), update.Message.Chat.ID, radiusUp); err != nil {
+						utils.Error(err)
+					}
 				}
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Радиус успешно сохранен, и будет применён в поисках ближайщих мест")
-				bot.Send(msg)
-				break
 			} else {
-				msg := tgbotapi.NewMessage(u.Message.Chat.ID, "Вы ввели неверный формат радиуса. Пожалуйста, повторите попытку.")
-				bot.Send(msg)
+				if err := dbRadius.SaveRadiusSearch(context.Background(), update.Message.Chat.ID, meter); err != nil {
+					utils.Error("Save radius error: ", err)
+				}
 			}
+
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Радиус успешно сохранен и будет применен в поисках ближайших мест.")
+			bot.Send(msg)
+			break
+		} else {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы ввели неверный формат радиуса. Пожалуйста, повторите попытку.")
+			bot.Send(msg)
 		}
-	} else if update.Message.Text == "Нет" {
-		reply := "Радиус поиска не будет ограничен"
+
+	case "Нет":
+		reply := "Радиус поиска не будет ограничен."
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 
 		removeKeyboard := tgbotapi.NewRemoveKeyboard(true)
 		msg.ReplyMarkup = removeKeyboard
+		msg.ReplyMarkup = createMainMenu()
 		bot.Send(msg)
-	} else {
-		reply := "Пожалуйста выберите один из вариантов ответа"
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, reply)
-
-		yesBTN := tgbotapi.NewKeyboardButton("Да")
-		noBTN := tgbotapi.NewKeyboardButton("Нет")
-
-		keyboard := tgbotapi.NewReplyKeyboard(
-			tgbotapi.NewKeyboardButtonRow(yesBTN, noBTN),
-		)
-
-		keyboard.OneTimeKeyboard = true 
-
-		msg.ReplyMarkup = keyboard
+	default:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Неверный ввод. Пожалуйста, используйте кнопки для выбора.")
+		msg.ReplyMarkup = createMainMenu()
 		bot.Send(msg)
 	}
 }

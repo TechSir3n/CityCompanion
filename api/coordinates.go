@@ -2,11 +2,11 @@ package api
 
 import (
 	"context"
-	"math"
-
+	"fmt"
 	"github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
+	"math"
 )
 
 func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
@@ -49,32 +49,32 @@ func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbota
 		bot.Send(msg)
 
 		db := database.NewUserLocationImpl(database.DB)
+		errCh := make(chan string)
 
 		getNewUpdate := <-updates
 		if getNewUpdate.Message != nil && getNewUpdate.Message.Text == "Город" {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название города: ")
 			bot.Send(msg)
 
-			city := make(chan string)
-			waitInputUser(city, updates)
+			cityInput := make(chan string)
+			waitInputUser(cityInput, errCh, updates)
+			city := <-cityInput
 
-			if latitude, longitude, err := getCordinatesByCity(<-city); err != nil ||
+			if latitude, longitude, err := getCordinatesByCity(city); err != nil ||
 				longitude == 0.0 && latitude == 0.0 {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не удалось определить кординаты вашего города,попробуйте ещё раз или"+
 					"проверти корректность веденного вами города")
 				bot.Send(msg)
 				return
 			} else {
-				db.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude)
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Благодарим,кординаты вашего города успешно получены, и сохранены !")
-				bot.Send(msg)
+				isHaveDB(bot, db, update, latitude, longitude)
 			}
 		} else if getNewUpdate.Message.Text == "Улица" {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название вашей улицы в формате(улица,город): ")
 			bot.Send(msg)
 
 			streetInput := make(chan string)
-			waitInputUser(streetInput, updates)
+			waitInputUser(streetInput, errCh, updates)
 			street := <-streetInput
 
 			if !assistance.IsRightFormat(street) {
@@ -89,18 +89,32 @@ func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbota
 					"проверти корректность веденного вами улицы")
 				bot.Send(msg)
 			} else {
-				db.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude)
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Благодарим,кординаты вашей улицы успешно получены, и сохранены !")
-				bot.Send(msg)
+				isHaveDB(bot, db, update, latitude, longitude)
 			}
 
 		}
 	}
 }
 
+func isHaveDB(bot *tgbotapi.BotAPI, db *database.UserLocationImpl, update tgbotapi.Update, latitude, longitude float64) {
+	if err, lat, lon := db.GetUserLocation(context.Background(), update.Message.Chat.ID); err == nil {
+		if lat != 0.0 && lon != 0.0 {
+			if err = db.UpdateUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude); err != nil {
+				fmt.Printf("Error update location: %v", err)
+			}
+		} else {
+			if err = db.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude); err != nil {
+				fmt.Printf("Error save location: %v", err)
+			}
+		}
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Благодарим,кординаты вашего города успешно получены, и сохранены !")
+		bot.Send(msg)
+	}
+}
+
 func isCoordinatesShared(userID int64) bool {
 	userLocation := database.NewUserLocationImpl(database.DB)
-	err, latitude, longitude := userLocation.GetUserLocation(context.Background(),userID)
+	err, latitude, longitude := userLocation.GetUserLocation(context.Background(), userID)
 	if err != nil {
 		return false
 	} else if math.IsNaN(latitude) || math.IsNaN(longitude) {

@@ -15,6 +15,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 	db := database.NewReviewPlacesImp(database.DB)
 	found := false
 	locName := <-place
+	errCh:=make(chan string)
 	for _, location := range locations {
 		if locName == location.Name {
 			review := tgbotapi.NewMessage(chatID, "Отлично,теперь можете оставить свой отзыв")
@@ -24,7 +25,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			bot.Send(ratingMsg)
 
 			inputRating := make(chan string)
-			waitInputUser(inputRating, updates)
+			waitInputUser(inputRating,errCh, updates)
 			rating := <-inputRating
 
 			if rating != "" {
@@ -33,7 +34,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			}
 
 			inputName := make(chan string)
-			waitInputUser(inputName, updates)
+			waitInputUser(inputName,errCh, updates)
 
 			name := <-inputName
 			if name != "" {
@@ -42,7 +43,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			}
 
 			inputComment := make(chan string)
-			waitInputUser(inputComment, updates)
+			waitInputUser(inputComment,errCh, updates)
 			comment := <-inputComment
 
 			if comment != "" {
@@ -62,6 +63,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 		}
 	}
 
+
 	if !found {
 		msg := tgbotapi.NewMessage(chatID, "Вы ввели место, которого нет в списке.")
 		bot.Send(msg)
@@ -74,8 +76,11 @@ func checkReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, place chan string
 	db := database.NewReviewPlacesImp(database.DB)
 	var messageText bytes.Buffer
 	for _, location := range locations {
+		messageText.Reset()
 		if location.Name == locName {
-			if comments, usernames, ratings, created, err := db.GetReview(context.Background(), locName); err != nil {
+			ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+			defer cancel()
+			if comments, usernames, ratings, created, err := db.GetReview(ctx, locName); err != nil {
 				msg := tgbotapi.NewMessage(chatID, "Простите,отзывов об этом заведение еще нет, или их не удалось получить.")
 				bot.Send(msg)
 			} else {

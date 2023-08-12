@@ -6,9 +6,9 @@ import (
 )
 
 type SavedPlaces interface {
-	SavePlace(ctx context.Context, name, address string) error
+	SavePlace(ctx context.Context, userID int64, name, address string) error
 
-	GetSavePlaces(ctx context.Context) ([]string, []string, error)
+	GetSavePlaces(ctx context.Context, userID int64) ([]string, []string, error)
 
 	DeletePlace(ctx context.Context, name string) error
 }
@@ -23,15 +23,15 @@ func NewSavedPlacesImpl(db *sql.DB) *SavedPlacesImpl {
 	}
 }
 
-func (s *SavedPlacesImpl) SavePlace(ctx context.Context, name, address string) error {
-	if _, err := s.DB.Exec(`INSERT INTO SavePlace(name,address) VALUES($1,$2)`, name, address); err != nil {
+func (s *SavedPlacesImpl) SavePlace(ctx context.Context, userID int64, name, address string) error {
+	if _, err := s.DB.Exec(`INSERT INTO StoragePlace(userID,name,address) VALUES($1,$2,$3)`, userID, name, address); err != nil {
 		return err
 	}
 	return nil
 }
 
-func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context) ([]string, []string, error) {
-	rows, err := s.DB.Query(`SELECT name,address FROM SavePlace`)
+func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context, userID int64) ([]string, []string, error) {
+	rows, err := s.DB.Query(`SELECT name,address FROM StoragePlace WHERE userID=$1`, userID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,7 +43,7 @@ func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context) ([]string, []string
 		if err != nil {
 			return nil, nil, err
 		}
-		
+
 		names = append(names, name)
 		addresses = append(addresses, address)
 	}

@@ -48,20 +48,20 @@ func ConnectDB() {
 		return
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SaveRadius(id SERIAL PRIMARY KEY,
-		radius FLOAT)`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS Radius(id SERIAL PRIMARY KEY,
+		userID INTEGER NOT NULL,radius FLOAT)`); err != nil {
 		utils.Error("Failed to create table SaveRadius: %v ", err)
 		return
 	}
 
-	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS SavePlace(id SERIAL PRIMARY KEY,
-		name VARCHAR(233),address VARCHAR(233))`); err != nil {
+	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS StoragePlace(id SERIAL PRIMARY KEY,
+		userID INTEGER NOT NULL,name VARCHAR(233),address VARCHAR(233))`); err != nil {
 		utils.Error("Failed to create table SavePlace: %v ", err)
 		return
 	}
 
-	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SaveFavoritePlace(id SERIAL PRIMARY KEY,
-		name VARCHAR(233),address VARCHAR(233))`); err != nil {
+	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SavedFavoritePlace(id SERIAL PRIMARY KEY,
+		userID INTEGER NOT NULL,name VARCHAR(233),address VARCHAR(233))`); err != nil {
 		utils.Error("Failed to create table SaveFavoritePlace: %v ", err)
 		return
 	}
