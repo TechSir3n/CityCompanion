@@ -24,7 +24,7 @@ func NewFavoritePlacesImp(db *sql.DB) *FavoritePlacesImpl {
 }
 
 func (f *FavoritePlacesImpl) SaveFavoritePlace(ctx context.Context, userID int64, name, address string) error {
-	if _, err := f.DB.Exec(`INSERT INTO  SavedFavoritePlace(userID,name,address) VALUES($1,$2,$3)`,
+	if _, err := f.DB.ExecContext(ctx,`INSERT INTO  SavedFavoritePlace(userID,name,address) VALUES($1,$2,$3)`,
 		userID, name, address); err != nil {
 		return err
 	}
@@ -32,7 +32,7 @@ func (f *FavoritePlacesImpl) SaveFavoritePlace(ctx context.Context, userID int64
 }
 
 func (f *FavoritePlacesImpl) GetFavoritePlaces(ctx context.Context, userID int64) ([]string, []string, error) {
-	rows, err := f.DB.Query(`SELECT name,address FROM SavedFavoritePlace WHERE userID=$1`, userID)
+	rows, err := f.DB.QueryContext(ctx,`SELECT name,address FROM SavedFavoritePlace WHERE userID=$1`, userID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -57,5 +57,6 @@ func (f *FavoritePlacesImpl) GetFavoritePlaces(ctx context.Context, userID int64
 }
 
 func (f *FavoritePlacesImpl) DeleteFavoritePlace(ctx context.Context, name string) error {
+	// создать кнопку редактировать,которая позволит удалять места сохраненные и избранные
 	return nil
 }

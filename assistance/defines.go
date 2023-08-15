@@ -84,7 +84,7 @@ func NewPlaceCategories() *PlaceCategories {
 }
 
 
-type CodeCategories struct { 
+type PlaceCategoriesCode struct { 
 	CafeAndRestaurantsCode    string
 
 	CoffeeAndTeaCode          string
@@ -112,8 +112,8 @@ type CodeCategories struct {
 	BarsCode                string
 }
 
-func NewCodeCategories() *CodeCategories { 
-	return &CodeCategories{
+func NewPlaceCategoriesCode() *PlaceCategoriesCode { 
+	return &PlaceCategoriesCode{
 		CafeAndRestaurantsCode: "13065" ,
 		CoffeeAndTeaCode:  "13032",
 		JapaneseFoodCode: "13263",

@@ -1,11 +1,11 @@
 package assistance
 
 import (
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"log"
 	"strconv"
 	"strings"
 
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
 func WarningLocation(bot *tgbotapi.BotAPI, update tgbotapi.Update) {

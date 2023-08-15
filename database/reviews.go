@@ -30,7 +30,7 @@ func NewReviewPlacesImp(db *sql.DB) *ReviewPlacesImpl {
 func (r *ReviewPlacesImpl) SaveReview(ctx context.Context, name, address, comment,
 	username string, rating int) error {
 	now := time.Now()
-	if _, err := r.DB.Exec(`INSERT INTO Reviews(name,address,userName,rating,comment,created_at) VALUES($1,$2,$3,$4,$5,$6)`,
+	if _, err := r.DB.ExecContext(ctx,`INSERT INTO Reviews(name,address,userName,rating,comment,created_at) VALUES($1,$2,$3,$4,$5,$6)`,
 		name, address, username, rating, comment, now); err != nil {
 		return err
 	}
@@ -39,7 +39,7 @@ func (r *ReviewPlacesImpl) SaveReview(ctx context.Context, name, address, commen
 }
 
 func (r *ReviewPlacesImpl) GetReview(ctx context.Context, name string) ([]string, []string, []int, []string, error) {
-	rows, err := r.DB.Query(`SELECT userName,rating,comment,created_at FROM Reviews WHERE name=$1`, name)
+	rows, err := r.DB.QueryContext(ctx,`SELECT userName,rating,comment,created_at FROM Reviews WHERE name=$1`, name)
 	if err != nil {
 		return nil, nil, nil, nil, err
 	}

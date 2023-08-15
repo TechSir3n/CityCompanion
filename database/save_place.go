@@ -24,14 +24,14 @@ func NewSavedPlacesImpl(db *sql.DB) *SavedPlacesImpl {
 }
 
 func (s *SavedPlacesImpl) SavePlace(ctx context.Context, userID int64, name, address string) error {
-	if _, err := s.DB.Exec(`INSERT INTO StoragePlace(userID,name,address) VALUES($1,$2,$3)`, userID, name, address); err != nil {
+	if _, err := s.DB.ExecContext(ctx,`INSERT INTO StoragePlace(userID,name,address) VALUES($1,$2,$3)`, userID, name, address); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context, userID int64) ([]string, []string, error) {
-	rows, err := s.DB.Query(`SELECT name,address FROM StoragePlace WHERE userID=$1`, userID)
+	rows, err := s.DB.QueryContext(ctx,`SELECT name,address FROM StoragePlace WHERE userID=$1`, userID)
 	if err != nil {
 		return nil, nil, err
 	}

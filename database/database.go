@@ -3,9 +3,9 @@ package database
 import (
 	"database/sql"
 	"fmt"
-	utils "github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
+	"log"
 	"os"
 	"path/filepath"
 )
@@ -13,11 +13,11 @@ import (
 func init() {
 	envFilePath, err := filepath.Abs(".env")
 	if err != nil {
-		utils.Fatal("Error[InitFunc]: %v", err)
+		log.Fatal("Error[InitFunc]:", err)
 	}
 
 	if err := godotenv.Load(envFilePath); err != nil {
-		utils.Fatal("Error[InitFunc]: %v", err)
+		log.Fatal("Error[InitFunc]: ", err)
 	}
 }
 
@@ -35,40 +35,40 @@ func ConnectDB() {
 	var err error
 	DB, err = sql.Open("postgres", connStr)
 	if err != nil {
-		utils.Fatal("Failed open database %v", err)
+		log.Fatal("Failed open database ", err)
 	}
 
 	if err = DB.Ping(); err != nil {
-		utils.Error("Bad database connection: ", err.Error)
+		log.Printf("Bad database connection: %v", err)
 	}
 
 	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS UserLocation(id  SERIAL PRIMARY KEY,
 		userID INTEGER NOT NULL ,latitude FLOAT,longitude FLOAT)`); err != nil {
-		utils.Error("Failed to create table SaveLocation: %v ", err)
+		log.Printf("Failed to create table SaveLocation: %v ", err)
 		return
 	}
 
 	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS Radius(id SERIAL PRIMARY KEY,
 		userID INTEGER NOT NULL,radius FLOAT)`); err != nil {
-		utils.Error("Failed to create table SaveRadius: %v ", err)
+		log.Printf("Failed to create table SaveRadius: %v ", err)
 		return
 	}
 
 	if _, err = DB.Exec(`CREATE TABLE IF NOT EXISTS StoragePlace(id SERIAL PRIMARY KEY,
 		userID INTEGER NOT NULL,name VARCHAR(233),address VARCHAR(233))`); err != nil {
-		utils.Error("Failed to create table SavePlace: %v ", err)
+		log.Printf("Failed to create table SavePlace: %v ", err)
 		return
 	}
 
 	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS SavedFavoritePlace(id SERIAL PRIMARY KEY,
 		userID INTEGER NOT NULL,name VARCHAR(233),address VARCHAR(233))`); err != nil {
-		utils.Error("Failed to create table SaveFavoritePlace: %v ", err)
+		log.Printf("Failed to create table SaveFavoritePlace: %v ", err)
 		return
 	}
 
 	if _, err := DB.Exec(`CREATE TABLE IF NOT EXISTS Reviews(id SERIAL PRIMARY KEY,name VARCHAR(233),address VARCHAR(233),userName VARCHAR(50),
 	rating INTEGER,comment TEXT,created_at TIMESTAMP)`); err != nil {
-		utils.Error("Failed to create table Reviews: %v", err)
+		log.Printf("Failed to create table Reviews: %v", err)
 		return
 	}
 }

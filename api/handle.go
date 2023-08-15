@@ -151,6 +151,7 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 					utils.Error("Save radius error: ", err)
 				}
 			}
+
 			msgM := tgbotapi.NewMessage(update.Message.Chat.ID, "Радиус успешно сохранен и будет применен в поисках ближайших мест.")
 			msgM.ReplyMarkup = createMainMenu()
 			bot.Send(msgM)
@@ -166,9 +167,7 @@ func handleRadiusResponse(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates 
 		msg.ReplyMarkup = createMainMenu()
 		bot.Send(msg)
 	default:
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Неверный ввод. Пожалуйста, используйте кнопки для выбора.")
-		msg.ReplyMarkup = createMainMenu()
-		bot.Send(msg)
+		break
 	}
 }
 
