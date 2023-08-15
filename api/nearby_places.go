@@ -83,6 +83,10 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 			tgbotapi.NewKeyboardButton("Сохранить место"),
 			tgbotapi.NewKeyboardButton("Добавить в избранное"),
 		),
+
+		tgbotapi.NewKeyboardButtonRow(
+			tgbotapi.NewKeyboardButton("Назад"),
+		),
 	)
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, result)
@@ -105,7 +109,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place,errCh, updates)
+				waitInputUser(place, errCh, updates)
 				detailAboutPlace(bot, update.Message.Chat.ID, <-place, locations)
 				break
 			case "button2":
@@ -115,7 +119,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place,errCh, updates)
+				waitInputUser(place, errCh, updates)
 				showInMap(<-place, bot, update.Message.Chat.ID, locations)
 
 			case "button3":
@@ -123,7 +127,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				bot.Send(msg)
 
 				place := make(chan string)
-				waitInputUser(place, errCh,updates)
+				waitInputUser(place, errCh, updates)
 				checkReviewOfThePlace(bot, update.Message.Chat.ID, place, locations)
 
 			case "button4":
@@ -131,7 +135,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				bot.Send(msg)
 
 				place := make(chan string)
-				waitInputUser(place,errCh, updates)
+				waitInputUser(place, errCh, updates)
 				leftReviewOfThePlace(bot, update.Message.Chat.ID, updates, update, place, locations)
 			}
 
@@ -144,7 +148,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place,errCh, updates)
+				waitInputUser(place, errCh, updates)
 				savePlace(bot, update.Message.Chat.ID, <-place, locations)
 
 			case "Добавить в избранное":
@@ -154,8 +158,14 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				}
 
 				place := make(chan string)
-				waitInputUser(place,errCh,updates)
+				waitInputUser(place, errCh, updates)
 				saveFavoritePlace(bot, update.Message.Chat.ID, <-place, locations)
+
+			case "Назад":
+				msg.Text = "Выберите действие: "
+				msg.ReplyMarkup = createNeedAction()
+				bot.Send(msg)
+				return
 			}
 		}
 	}
@@ -214,6 +224,7 @@ func buildQueryURL(limit int64, latitude, longitude float64, categoryID string, 
 	dbRadius := database.NewRadiusSearchImpl(database.DB)
 	err, radius := dbRadius.GetRadiusSearch(context.Background(), userID)
 	if err != nil {
+		radius = 100000
 		utils.Error("Failed to get radius user's")
 	}
 

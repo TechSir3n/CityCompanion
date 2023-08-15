@@ -3,12 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
+	"os"
+
 	"github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	_ "github.com/TechSir3n/CityCompanion/database"
 	"github.com/go-telegram-bot-api/telegram-bot-api"
-	"log"
-	"os"
 )
 
 func CreateButton() {
@@ -32,37 +33,41 @@ func CreateButton() {
 			continue
 		}
 
+		commands := assistance.NewComnands()
+		categories := assistance.NewPlaceCategories()
+		categoriesCode := assistance.NewCodeCategories()
+
 		switch update.Message.Text {
-		case "/start":
+		case commands.Start:
 			reply := "Добро пожаловать в CityCompanion! Я ваш надежный гид по городу. " +
 				"Просто отправьте мне свои координаты, и я помогу вам найти лучшие места в городе: от уютных кафе и ресторанов до кинотеатров и парков с аттракционами." +
 				"Отправляйте свои запросы, и я с радостью помогу вам насладиться лучшими местами в вашем городе! "
 			msg = tgbotapi.NewMessage(update.Message.Chat.ID, reply)
 			msg.ReplyMarkup = createMainMenu()
 			bot.Send(msg)
-		case "❗️Показать меню":
+		case commands.Menu:
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
-		case "📍 Поделится с кординатами местоположения":
-			AskCoordinates(bot, update,updates)
-		case "🔍 Настроить радиус поиска":
+		case commands.Coordinates:
+			AskCoordinates(bot, update, updates)
+		case commands.Radius:
 			assistance.AdjuctRadiusSearch(bot, update)
-		case "/about":
+		case commands.About:
 			assistance.AboutBot(bot, update)
-		case "/showmenu":
+		case commands.Menu:
 			msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
 			msgN.ReplyMarkup = createNeedAction()
 			bot.Send(msgN)
-		case "/sendlocation":
-			AskCoordinates(bot, update,updates)
-		case "/getmylocation":
+		case commands.SendLocation:
+			AskCoordinates(bot, update, updates)
+		case commands.GetLocation:
 			street := GetUserStreet(update.Message.Chat.ID)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
 			bot.Send(msg)
-		case "/favoriteplace":
+		case commands.FavoritePlace:
 			f_db := database.NewFavoritePlacesImp(database.DB)
-			if names, addresses, err := f_db.GetFavoritePlaces(context.Background(),update.Message.Chat.ID); err != nil {
+			if names, addresses, err := f_db.GetFavoritePlaces(context.Background(), update.Message.Chat.ID); err != nil {
 				assistance.Error(err.Error())
 			} else {
 				var message string
@@ -72,9 +77,9 @@ func CreateButton() {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
 				bot.Send(msg)
 			}
-		case "/savedplaces":
+		case commands.SavedPlace:
 			s_db := database.NewSavedPlacesImpl(database.DB)
-			if names, addresses, err := s_db.GetSavePlaces(context.Background(),update.Message.Chat.ID); err != nil {
+			if names, addresses, err := s_db.GetSavePlaces(context.Background(), update.Message.Chat.ID); err != nil {
 				assistance.Error(err.Error())
 			} else {
 				var message string
@@ -84,73 +89,65 @@ func CreateButton() {
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
 				bot.Send(msg)
 			}
-		case "/adjustradius":
+		case commands.AdjustRadius:
 			assistance.AdjuctRadiusSearch(bot, update)
-		case "🍽️ Кафе-Рестораны":
-			handlePlaceCategory(bot, update, updates, "13000")
-		case "🍵 Кофейная-Чайная":
-			handlePlaceCategory(bot, update, updates, "13035")
-		case "🍣 Японская кухня":
-			handlePlaceCategory(bot, update, updates, "13276")
-		case "🏨 Отели":
-			handlePlaceCategory(bot, update, updates, "19014")
-		case "🍰 Кондитерские магазины":
-			handlePlaceCategory(bot, update, updates, "17057")
-		case "🏖️ Пляжи":
-			handlePlaceCategory(bot, update, updates, "16003")
-		case "🏛️ Достопремечательности и природа":
-			handlePlaceCategory(bot, update, updates, "16020")
-		case "🌳 Городские парки":
-			handlePlaceCategory(bot, update, updates, "16032")
-		case "🏋️‍♀️ Тренажерный зал и студии":
-			handlePlaceCategory(bot, update, updates, "19066")
-		case "💆‍♀️ Услуги для здоровья и красоты":
-			handlePlaceCategory(bot, update, updates, "17035")
-		case "⛪️ Церквки-Мечети":
-			handlePlaceCategory(bot, update, updates, "12106")
-		case "🛍️ Магазины":
-			handlePlaceCategory(bot, update, updates, "17096")
-		case "🍻 Бары":
-			handlePlaceCategory(bot, update, updates, "13012")
+		case categories.CafeAndRestaurants:
+			handlePlaceCategory(bot, update, updates, categoriesCode.CafeAndRestaurantsCode)
+		case categories.CoffeeAndTea:
+			handlePlaceCategory(bot, update, updates, categoriesCode.CoffeeAndTeaCode)
+		case categories.JapaneseFood:
+			handlePlaceCategory(bot, update, updates, categoriesCode.JapaneseFoodCode)
+		case categories.Hotels:
+			handlePlaceCategory(bot, update, updates, categoriesCode.HotelsCode)
+		case categories.ConfectioneryStores:
+			handlePlaceCategory(bot, update, updates, categoriesCode.ConfectioneryStoresCode)
+		case categories.Beaches:
+			handlePlaceCategory(bot, update, updates, categoriesCode.BeachesCode)
+		case categories.SightsAndNature:
+			handlePlaceCategory(bot, update, updates, categoriesCode.SightsAndNatureCode)
+		case categories.CityParks:
+			handlePlaceCategory(bot, update, updates, categoriesCode.CityParksCode)
+		case categories.GymAndStudios:
+			handlePlaceCategory(bot, update, updates, categoriesCode.GymAndStudiosCode)
+		case categories.HealthAndBeautyServices:
+			handlePlaceCategory(bot, update, updates, categoriesCode.HealthAndBeautyServicesCode)
+		case categories.ChurchesAndMosques:
+			handlePlaceCategory(bot, update, updates, categoriesCode.ChurchesAndMosquesCode)
+		case categories.Shops:
+			handlePlaceCategory(bot, update, updates, categoriesCode.ShopsCode)
+		case categories.Bars:
+			handlePlaceCategory(bot, update, updates, categoriesCode.BarsCode)
 		default:
-			handleRadiusResponse(bot, update,updates)
+			handleRadiusResponse(bot, update, updates)
 			handleGeocoding(bot, update)
 		}
 	}
 }
 
-func handlePlaceCategory(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel, category string) {
-	limitPhoto, limitPlace := assistance.AskLimit(bot, update, updates)
-	if isCoordinatesShared(update.Message.Chat.ID) {
-		GetNearbyPlaces(limitPlace, limitPhoto, category, bot, update, updates)
-	} else {
-		assistance.WarningLocation(bot, update)
-	}
-}
-
 func createNeedAction() tgbotapi.ReplyKeyboardMarkup {
+	categories := assistance.NewPlaceCategories()
 	replyMarkup := tgbotapi.ReplyKeyboardMarkup{
 		Keyboard: [][]tgbotapi.KeyboardButton{
 			{
-				tgbotapi.NewKeyboardButton("🍽️ Кафе-Рестораны"),
-				tgbotapi.NewKeyboardButton("🍵 Кофейная-Чайная"),
-				tgbotapi.NewKeyboardButton("🍣 Японская кухня"),
+				tgbotapi.NewKeyboardButton(categories.CafeAndRestaurants),
+				tgbotapi.NewKeyboardButton(categories.CoffeeAndTea),
+				tgbotapi.NewKeyboardButton(categories.JapaneseFood),
 			},
 			{
-				tgbotapi.NewKeyboardButton("🏖️ Пляжи"),
-				tgbotapi.NewKeyboardButton("🏛️ Достопремечательности и природа"),
-				tgbotapi.NewKeyboardButton("🌳 Городские парки"),
+				tgbotapi.NewKeyboardButton(categories.Beaches),
+				tgbotapi.NewKeyboardButton(categories.SightsAndNature),
+				tgbotapi.NewKeyboardButton(categories.CityParks),
 			},
 			{
-				tgbotapi.NewKeyboardButton("🏋️‍♀️ Тренажерный зал и студии"),
-				tgbotapi.NewKeyboardButton("💆‍♀️ Услуги для здоровья и красоты"),
-				tgbotapi.NewKeyboardButton("⛪️ Церквки-Мечети"),
+				tgbotapi.NewKeyboardButton(categories.GymAndStudios),
+				tgbotapi.NewKeyboardButton(categories.HealthAndBeautyServices),
+				tgbotapi.NewKeyboardButton(categories.ChurchesAndMosques),
 			},
 			{
-				tgbotapi.NewKeyboardButton("🛍️ Магазины"),
-				tgbotapi.NewKeyboardButton("🍻 Бары"),
-				tgbotapi.NewKeyboardButton("🍰 Кондитерские магазины"),
-				tgbotapi.NewKeyboardButton("🏨 Отели"),
+				tgbotapi.NewKeyboardButton(categories.Shops),
+				tgbotapi.NewKeyboardButton(categories.Bars),
+				tgbotapi.NewKeyboardButton(categories.ConfectioneryStores),
+				tgbotapi.NewKeyboardButton(categories.Hotels),
 			},
 		},
 		ResizeKeyboard: true,

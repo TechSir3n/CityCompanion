@@ -3,22 +3,14 @@ package api
 import (
 	"context"
 	"fmt"
-	"github.com/TechSir3n/CityCompanion/assistance"
 	"github.com/TechSir3n/CityCompanion/database"
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api"
 	"math"
 )
 
 func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
-	btnAllow := tgbotapi.KeyboardButton{
-		RequestLocation: true,
-		Text:            "Разрешить",
-	}
-
-	btnDeny := tgbotapi.KeyboardButton{
-		RequestLocation: false,
-		Text:            "Запретить",
-	}
+	btnAllow := tgbotapi.KeyboardButton{Text: "Разрешить"}
+	btnDeny := tgbotapi.KeyboardButton{RequestLocation: false, Text: "Запретить"}
 
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(btnAllow),
@@ -32,68 +24,7 @@ func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbota
 	msg.ReplyMarkup = keyboard
 	bot.Send(msg)
 
-	getNewUpdate := <-updates
-	if getNewUpdate.Message.Text != "" && getNewUpdate.Message.Text == "Запретить" {
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Для продолжения работы с ботом, пожалуйста, выберите орентир, город или адрес")
-
-		keyboard := tgbotapi.NewReplyKeyboard(
-			tgbotapi.NewKeyboardButtonRow(
-				tgbotapi.NewKeyboardButton("Город"),
-				tgbotapi.NewKeyboardButton("Улица"),
-			),
-		)
-
-		keyboard.OneTimeKeyboard = true
-		keyboard.ResizeKeyboard = true
-		msg.ReplyMarkup = keyboard
-		bot.Send(msg)
-
-		db := database.NewUserLocationImpl(database.DB)
-		errCh := make(chan string)
-
-		getNewUpdate := <-updates
-		if getNewUpdate.Message != nil && getNewUpdate.Message.Text == "Город" {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название города: ")
-			bot.Send(msg)
-
-			cityInput := make(chan string)
-			waitInputUser(cityInput, errCh, updates)
-			city := <-cityInput
-
-			if latitude, longitude, err := getCordinatesByCity(city); err != nil ||
-				longitude == 0.0 && latitude == 0.0 {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не удалось определить кординаты вашего города,попробуйте ещё раз или"+
-					"проверти корректность веденного вами города")
-				bot.Send(msg)
-				return
-			} else {
-				isHaveDB(bot, db, update, latitude, longitude)
-			}
-		} else if getNewUpdate.Message.Text == "Улица" {
-			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название вашей улицы в формате(улица,город): ")
-			bot.Send(msg)
-
-			streetInput := make(chan string)
-			waitInputUser(streetInput, errCh, updates)
-			street := <-streetInput
-
-			if !assistance.IsRightFormat(street) {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Вы ввели неверный формат улицы")
-				bot.Send(msg)
-				return
-			}
-
-			if latitude, longitude, err := getCoordinatesByStreet(street); err != nil ||
-				latitude == 0.0 && longitude == 0.0 {
-				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Не удалось определить кординаты вашей улицы,попробуйте ещё раз или "+
-					"проверти корректность веденного вами улицы")
-				bot.Send(msg)
-			} else {
-				isHaveDB(bot, db, update, latitude, longitude)
-			}
-
-		}
-	}
+	handleCordinates(bot, update, updates)
 }
 
 func isHaveDB(bot *tgbotapi.BotAPI, db *database.UserLocationImpl, update tgbotapi.Update, latitude, longitude float64) {
@@ -107,6 +38,7 @@ func isHaveDB(bot *tgbotapi.BotAPI, db *database.UserLocationImpl, update tgbota
 				fmt.Printf("Error save location: %v", err)
 			}
 		}
+
 		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Благодарим,кординаты вашего города успешно получены, и сохранены !")
 		bot.Send(msg)
 	}
