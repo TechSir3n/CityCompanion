@@ -8,7 +8,7 @@ import (
 func categoriesPlace(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
 	categories := assistance.NewPlaceCategories()
 	categoriesCode := assistance.NewPlaceCategoriesCode()
-	
+
 	switch update.Message.Text {
 	case categories.CafeAndRestaurants:
 		handlePlaceCategory(bot, update, updates, categoriesCode.CafeAndRestaurantsCode)
