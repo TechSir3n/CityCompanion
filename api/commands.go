@@ -13,6 +13,13 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 	var msgN tgbotapi.MessageConfig
 	var msg tgbotapi.MessageConfig
 
+	inlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(
+		tgbotapi.NewInlineKeyboardRow(
+			tgbotapi.NewInlineKeyboardButtonData("Удалить", "buttonDelete"),
+			tgbotapi.NewInlineKeyboardButtonData("Очистить", "buttonClean"),
+		),
+	)
+
 	switch update.Message.Text {
 	case commands.Start:
 		reply := "Добро пожаловать в CityCompanion! Я ваш надежный гид по городу. " +
@@ -43,28 +50,55 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 		bot.Send(msg)
 	case commands.FavoritePlace:
 		f_db := database.NewFavoritePlacesImp(database.DB)
-		if names, addresses, err := f_db.GetFavoritePlaces(context.Background(), update.Message.Chat.ID); err != nil {
-			assistance.Error(err.Error())
+		if names, addresses, err := f_db.GetFavoritePlaces(context.Background(), update.Message.Chat.ID); err != nil ||
+			names == nil && addresses == nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "В вашем списке еще нёт избранных мест")
+			bot.Send(msg)
 		} else {
 			var message string
 			for i := range names {
 				message += fmt.Sprintf("%d. %s - %s\n", i+1, names[i], addresses[i])
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+			msg.ReplyMarkup = inlineKeyboard
 			bot.Send(msg)
+
+			for upd := range updates {
+				if upd.CallbackQuery != nil {
+					redactionFavoritePlace(bot, update, update.Message.Chat.ID, updates)
+					break
+				} else {
+					return
+				}
+			}
 		}
+
 	case commands.SavedPlace:
 		s_db := database.NewSavedPlacesImpl(database.DB)
-		if names, addresses, err := s_db.GetSavePlaces(context.Background(), update.Message.Chat.ID); err != nil {
-			assistance.Error(err.Error())
+		if names, addresses, err := s_db.GetSavePlaces(context.Background(), update.Message.Chat.ID); err != nil ||
+			names == nil && addresses == nil {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "В вашем списке еще нёт сохранённых мест")
+			bot.Send(msg)
 		} else {
 			var message string
 			for i := range names {
 				message += fmt.Sprintf("%d. %s - %s\n", i+1, names[i], addresses[i])
 			}
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, message)
+			msg.ReplyMarkup = inlineKeyboard
 			bot.Send(msg)
+
+			for upd := range updates {
+				if upd.CallbackQuery != nil {
+					redactionSavePlace(bot, upd, update.Message.Chat.ID, updates)
+					break
+				} else {
+					return
+				}
+			}
+
 		}
+
 	case commands.AdjustRadius:
 		assistance.AdjuctRadiusSearch(bot, update)
 

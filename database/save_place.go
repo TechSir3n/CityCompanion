@@ -10,7 +10,9 @@ type SavedPlaces interface {
 
 	GetSavePlaces(ctx context.Context, userID int64) ([]string, []string, error)
 
-	DeletePlace(ctx context.Context, name string) error
+	DeleteSavePlaces(ctx context.Context, userID int64) error
+
+	DeleteOnePlace(ctx context.Context, userID int64, name string) error
 }
 
 type SavedPlacesImpl struct {
@@ -24,14 +26,14 @@ func NewSavedPlacesImpl(db *sql.DB) *SavedPlacesImpl {
 }
 
 func (s *SavedPlacesImpl) SavePlace(ctx context.Context, userID int64, name, address string) error {
-	if _, err := s.DB.ExecContext(ctx,`INSERT INTO StoragePlace(userID,name,address) VALUES($1,$2,$3)`, userID, name, address); err != nil {
+	if _, err := s.DB.ExecContext(ctx, `INSERT INTO StoragePlace(userID,name,address) VALUES($1,$2,$3)`, userID, name, address); err != nil {
 		return err
 	}
 	return nil
 }
 
 func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context, userID int64) ([]string, []string, error) {
-	rows, err := s.DB.QueryContext(ctx,`SELECT name,address FROM StoragePlace WHERE userID=$1`, userID)
+	rows, err := s.DB.QueryContext(ctx, `SELECT name,address FROM StoragePlace WHERE userID=$1`, userID)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -55,6 +57,17 @@ func (s *SavedPlacesImpl) GetSavePlaces(ctx context.Context, userID int64) ([]st
 	return names, addresses, nil
 }
 
-func (s *SavedPlacesImpl) DeletePlace(ctx context.Context, name string) error {
+func (s *SavedPlacesImpl) DeleteSavePlaces(ctx context.Context, userID int64) error {
+	if _, err := s.DB.ExecContext(ctx, `DELETE FROM StoragePlace WHERE userID=$1`, userID); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (s *SavedPlacesImpl) DeleteOnePlace(ctx context.Context, userID int64, name string) error {
+	if _, err := s.DB.ExecContext(ctx, `DELETE FROM StoragePlace WHERE userID=$1 AND name=$2`,
+		userID, name); err != nil {
+		return err
+	}
 	return nil
 }
