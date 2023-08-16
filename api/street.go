@@ -109,4 +109,3 @@ func GetCoordinates(userID int64) (float64, float64) {
 	return latitude, longitude
 }
 
-//  42.060308,48.300703

@@ -22,6 +22,9 @@ func TGBot() {
 	u.Timeout = 60
 
 	updates, err := bot.GetUpdatesChan(u)
+	if err!=nil { 
+		log.Fatalf("Error[GetUpdatesChan]: %v",err)
+	}
 
 	for update := range updates {
 		if update.Message == nil {

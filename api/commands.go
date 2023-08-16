@@ -15,8 +15,8 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 
 	inlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Удалить", "buttonDelete"),
-			tgbotapi.NewInlineKeyboardButtonData("Очистить", "buttonClean"),
+			tgbotapi.NewInlineKeyboardButtonData("\U0001F5D1  Удалить", "buttonDelete"),
+			tgbotapi.NewInlineKeyboardButtonData("\U0001F4A6 Очистить", "buttonClean"),
 		),
 	)
 

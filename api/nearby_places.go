@@ -68,24 +68,24 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 
 	keyboard := tgbotapi.NewInlineKeyboardMarkup(
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Подробнее о местe", "button1"),
-			tgbotapi.NewInlineKeyboardButtonData("Показать на карте", "button2"),
+			tgbotapi.NewInlineKeyboardButtonData("Подробнее о местe 📖", "button1"),
+			tgbotapi.NewInlineKeyboardButtonData("Показать на карте 🗺️", "button2"),
 		),
 
 		tgbotapi.NewInlineKeyboardRow(
-			tgbotapi.NewInlineKeyboardButtonData("Посмотреть отзывы места", "button3"),
-			tgbotapi.NewInlineKeyboardButtonData("Оставить отзыв о месте", "button4"),
+			tgbotapi.NewInlineKeyboardButtonData("Посмотреть отзывы места 👀", "button3"),
+			tgbotapi.NewInlineKeyboardButtonData("Оставить отзыв о месте ✍️", "button4"),
 		),
 	)
 
 	replyKeyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("Сохранить место"),
-			tgbotapi.NewKeyboardButton("Добавить в избранное"),
+			tgbotapi.NewKeyboardButton("Сохранить место 💾"),
+			tgbotapi.NewKeyboardButton("Добавить в избранное ⭐️"),
 		),
 
 		tgbotapi.NewKeyboardButtonRow(
-			tgbotapi.NewKeyboardButton("Назад"),
+			tgbotapi.NewKeyboardButton("⬅️ Назад"),
 		),
 	)
 
@@ -141,7 +141,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 
 		} else if update.Message != nil && update.Message.Text != "" {
 			switch upd.Message.Text {
-			case "Сохранить место":
+			case "Сохранить место 💾":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места которое хотите сохранить.")
 				if _, err := bot.Send(msg); err != nil {
 					return
@@ -151,7 +151,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				waitInputUser(place, errCh, updates)
 				savePlace(bot, update.Message.Chat.ID, <-place, locations)
 
-			case "Добавить в избранное":
+			case "Добавить в избранное ⭐️":
 				msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название места которое хотите добавить в израбнное.")
 				if _, err := bot.Send(msg); err != nil {
 					return
@@ -161,7 +161,7 @@ func GetNearbyPlaces(limitSearch, limitPhotos int64, categoryID string, bot *tgb
 				waitInputUser(place, errCh, updates)
 				saveFavoritePlace(bot, update.Message.Chat.ID, <-place, locations)
 
-			case "Назад":
+			case "⬅️ Назад":
 				msg.Text = "Выберите действие: "
 				msg.ReplyMarkup = createNeedAction()
 				bot.Send(msg)
@@ -227,17 +227,17 @@ func buildQueryURL(limit int64, latitude, longitude float64, categoryID string, 
 		radius = 100000
 		utils.Error("Failed to get radius user's")
 	}
-
+	
 	queryParams := url.Values{}
 	queryParams.Set("ll", fmt.Sprintf("%f,%f", latitude, longitude))
-	queryParams.Set("categories", categoryID)
+	queryParams.Set("categories",categoryID)
 	queryParams.Set("client_id", os.Getenv("CLIENT_ID"))
 	queryParams.Set("radius", strconv.FormatFloat(radius, 'f', 0, 64))
 	queryParams.Set("client_secret", os.Getenv("CLIENT_SECRET"))
 	queryParams.Set("oauth_token", os.Getenv("API_TOKEN"))
 	queryParams.Set("limit", strconv.FormatInt(limit, 10))
 	queryParams.Set("sort", "distance")
-	queryParams.Set("open_now", "true")
+
 
 	return fmt.Sprintf("%s?%s", os.Getenv("API_URLSEARCHPLACE"), queryParams.Encode())
 }

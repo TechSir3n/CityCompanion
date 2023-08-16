@@ -47,8 +47,8 @@ func handleCordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbo
 
 		keyboardc := tgbotapi.NewReplyKeyboard(
 			tgbotapi.NewKeyboardButtonRow(
-				tgbotapi.NewKeyboardButton("Город"),
-				tgbotapi.NewKeyboardButton("Улица"),
+				tgbotapi.NewKeyboardButton("\U0001F3E0 Город"),
+				tgbotapi.NewKeyboardButton("\U0001F3E2 Улица"),
 			),
 		)
 
@@ -62,7 +62,7 @@ func handleCordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbo
 
 		waitInputUser(textInput, errCh, updates)
 		text := <-textInput
-		if text == "Город" {
+		if text == "\U0001F3E0 Город" {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название города: ")
 			bot.Send(msg)
 
@@ -79,7 +79,7 @@ func handleCordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbo
 			} else {
 				isHaveDB(bot, db, update, latitude, longitude)
 			}
-		} else if text == "Улица" {
+		} else if text == "\U0001F3E2 Улица" {
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Введите название вашей улицы в формате(улица,город): ")
 			bot.Send(msg)
 
@@ -102,7 +102,7 @@ func handleCordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbo
 				isHaveDB(bot, db, update, latitude, longitude)
 			}
 		}
-	} else if text == "Разрешить" {
+	} else if text == "Разрешить \U0001F44D" {
 		btn := tgbotapi.KeyboardButton{
 			RequestLocation: true,
 			Text:            "Подвердить",

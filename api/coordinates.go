@@ -9,8 +9,8 @@ import (
 )
 
 func AskCoordinates(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
-	btnAllow := tgbotapi.KeyboardButton{Text: "Разрешить"}
-	btnDeny := tgbotapi.KeyboardButton{RequestLocation: false, Text: "Запретить"}
+	btnAllow := tgbotapi.KeyboardButton{Text: "Разрешить \U0001F44D"}
+	btnDeny := tgbotapi.KeyboardButton{RequestLocation: false, Text: "Запретить \U0001F44E"}
 
 	keyboard := tgbotapi.NewReplyKeyboard(
 		tgbotapi.NewKeyboardButtonRow(btnAllow),

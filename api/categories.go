@@ -1,14 +1,14 @@
 package api
 
 import (
-	 "github.com/go-telegram-bot-api/telegram-bot-api"
-	 "github.com/TechSir3n/CityCompanion/assistance"
+	"github.com/TechSir3n/CityCompanion/assistance"
+	"github.com/go-telegram-bot-api/telegram-bot-api"
 )
 
-func categoriesPlace(bot *tgbotapi.BotAPI, update tgbotapi.Update,updates tgbotapi.UpdatesChannel) {
+func categoriesPlace(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
 	categories := assistance.NewPlaceCategories()
 	categoriesCode := assistance.NewPlaceCategoriesCode()
-
+	
 	switch update.Message.Text {
 	case categories.CafeAndRestaurants:
 		handlePlaceCategory(bot, update, updates, categoriesCode.CafeAndRestaurantsCode)

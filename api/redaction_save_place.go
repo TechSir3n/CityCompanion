@@ -38,8 +38,8 @@ func redactionSavePlace(bot *tgbotapi.BotAPI, upd tgbotapi.Update, chatID int64,
 	} else {
 		return
 	}
-
 }
+
 func redactionFavoritePlace(bot *tgbotapi.BotAPI, upd tgbotapi.Update, chatID int64, updates tgbotapi.UpdatesChannel) {
 	favoritePlacesDB := database.NewFavoritePlacesImp(database.DB)
 	if upd.CallbackQuery.Data == "buttonDelete" {

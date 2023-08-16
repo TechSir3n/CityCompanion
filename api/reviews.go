@@ -15,7 +15,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 	db := database.NewReviewPlacesImp(database.DB)
 	found := false
 	locName := <-place
-	errCh:=make(chan string)
+	errCh := make(chan string)
 	for _, location := range locations {
 		if locName == location.Name {
 			review := tgbotapi.NewMessage(chatID, "Отлично,теперь можете оставить свой отзыв")
@@ -25,7 +25,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			bot.Send(ratingMsg)
 
 			inputRating := make(chan string)
-			waitInputUser(inputRating,errCh, updates)
+			waitInputUser(inputRating, errCh, updates)
 			rating := <-inputRating
 
 			if rating != "" {
@@ -34,7 +34,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			}
 
 			inputName := make(chan string)
-			waitInputUser(inputName,errCh, updates)
+			waitInputUser(inputName, errCh, updates)
 
 			name := <-inputName
 			if name != "" {
@@ -43,7 +43,7 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			}
 
 			inputComment := make(chan string)
-			waitInputUser(inputComment,errCh, updates)
+			waitInputUser(inputComment, errCh, updates)
 			comment := <-inputComment
 
 			if comment != "" {
@@ -62,7 +62,6 @@ func leftReviewOfThePlace(bot *tgbotapi.BotAPI, chatID int64, updates tgbotapi.U
 			}
 		}
 	}
-
 
 	if !found {
 		msg := tgbotapi.NewMessage(chatID, "Вы ввели место, которого нет в списке.")
