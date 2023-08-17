@@ -19,16 +19,15 @@ func handleGeocoding(bot *tgbotapi.BotAPI, update tgbotapi.Update) {
 	longitude := location.Longitude
 
 	userLocation := database.NewUserLocationImpl(database.DB)
-	if err, lat, lon := userLocation.GetUserLocation(context.Background(), update.Message.Chat.ID); err != nil {
-		if lat != 0.0 && lon != 0.0 {
-			if err = userLocation.UpdateUserLocation(context.Background(), update.Message.Chat.ID, lat, lon); err != nil {
-				utils.Error("Failed to save  update user: %v", err)
-			}
-		} else {
-			if err := userLocation.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude); err != nil {
-				utils.Error("Failed to save location user: %v", err)
-			}
+	if err, lat, lon := userLocation.GetUserLocation(context.Background(), update.Message.Chat.ID); lat != 0.0 && lon != 0.0 {
+		if err = userLocation.UpdateUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude); err != nil {
+			utils.Error("Failed to save  update user: %v", err)
 		}
+	} else {
+		if err := userLocation.SaveUserLocation(context.Background(), update.Message.Chat.ID, latitude, longitude); err != nil {
+			utils.Error("Failed to save location user: %v", err)
+		}
+
 	}
 
 	msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Ваши кординаты успешно получены."+
