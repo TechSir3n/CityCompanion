@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -21,11 +20,11 @@ type GeocodingResponse struct {
 	} `json:"results"`
 }
 
-func getUserStreet(userID int64) string {
+func getUserStreet(userID int64) (string, error) {
 	userLocation := database.NewUserLocationImpl(database.DB)
-	err, latitude, longitude := userLocation.GetUserLocation(context.Background(),userID)
+	err, latitude, longitude := userLocation.GetUserLocation(context.Background(), userID)
 	if err != nil {
-		log.Fatalf("Failed to get user gelocation: %v", err)
+		return "", err
 	}
 
 	url := fmt.Sprintf("https://api.opencagedata.com/geocode/v1/json?q=%f,%f&key=%s",
@@ -33,29 +32,29 @@ func getUserStreet(userID int64) string {
 
 	response, err := http.Get(url)
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
 
 	var geocodingResponse GeocodingResponse
 	err = json.Unmarshal(body, &geocodingResponse)
 	if err != nil {
-		return err.Error()
+		return "", err
 	}
 
 	var address string
 	if len(geocodingResponse.Results) > 0 {
 		address = geocodingResponse.Results[0].FormattedAddress
 	} else {
-		return "Адресс не наден"
+		return "", err
 	}
 
-	return address
+	return address, nil
 }
 
 func getCoordinatesByStreet(streetName string) (float64, float64, error) {
@@ -101,11 +100,10 @@ func getCoordinatesByStreet(streetName string) (float64, float64, error) {
 
 func GetCoordinates(userID int64) (float64, float64) {
 	userLocation := database.NewUserLocationImpl(database.DB)
-	err, latitude, longitude := userLocation.GetUserLocation(context.Background(),userID)
+	err, latitude, longitude := userLocation.GetUserLocation(context.Background(), userID)
 	if err != nil {
 		return 0.0, 0.0
 	}
 
 	return latitude, longitude
 }
-

@@ -45,7 +45,8 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 	case commands.SendLocation:
 		AskCoordinates(bot, update, updates)
 	case commands.GetLocation:
-		if street := getUserStreet(update.Message.Chat.ID); street == "" {
+		if street, err := getUserStreet(update.Message.Chat.ID); street == "" || err != nil {
+			fmt.Printf("User street error : %v", err)
 			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, поделитесь своим местоположением.")
 			bot.Send(msg)
 		} else {
