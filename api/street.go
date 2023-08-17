@@ -21,7 +21,7 @@ type GeocodingResponse struct {
 	} `json:"results"`
 }
 
-func GetUserStreet(userID int64) string {
+func getUserStreet(userID int64) string {
 	userLocation := database.NewUserLocationImpl(database.DB)
 	err, latitude, longitude := userLocation.GetUserLocation(context.Background(),userID)
 	if err != nil {

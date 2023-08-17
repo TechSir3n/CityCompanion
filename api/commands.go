@@ -45,9 +45,13 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 	case commands.SendLocation:
 		AskCoordinates(bot, update, updates)
 	case commands.GetLocation:
-		street := GetUserStreet(update.Message.Chat.ID)
-		msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
-		bot.Send(msg)
+		if street := getUserStreet(update.Message.Chat.ID); street == "" {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Пожалуйста, поделитесь своим местоположением.")
+			bot.Send(msg)
+		} else {
+			msg := tgbotapi.NewMessage(update.Message.Chat.ID, street)
+			bot.Send(msg)
+		}
 	case commands.FavoritePlace:
 		f_db := database.NewFavoritePlacesImp(database.DB)
 		if names, addresses, err := f_db.GetFavoritePlaces(context.Background(), update.Message.Chat.ID); err != nil ||
