@@ -6,7 +6,6 @@ import (
 	"github.com/joho/godotenv"
 	_ "github.com/lib/pq"
 	"log"
-	"os"
 	"path/filepath"
 )
 
@@ -24,16 +23,20 @@ func init() {
 var DB *sql.DB
 
 func ConnectDB() {
-	db_host := os.Getenv("DB_HOST")
-	db_password := os.Getenv("DB_PASSWORD")
-	db_name := os.Getenv("DB_NAME")
-	db_user := os.Getenv("DB_USER")
-	db_port := os.Getenv("DB_PORT")
+	// db_host := os.Getenv("DB_HOST")
+	// db_password := os.Getenv("DB_PASSWORD")
+	// db_name := os.Getenv("DB_NAME")
+	// db_user := os.Getenv("DB_USER")
+	// db_port := os.Getenv("DB_PORT")
 
-	connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
-		db_host, db_port, db_user, db_password, db_name)
+	// connStr := fmt.Sprintf("host=%s port=%s user=%s password=%s dbname=%s sslmode=disable",
+	// db_host, db_port, db_user, db_password, db_name)
+
+	connStr2 := "postgres://postgres:BVEZR16AFLJMjQrMpVVp@containers-us-west-98.railway.app:5754/railway"
+
+
 	var err error
-	DB, err = sql.Open("postgres", connStr)
+	DB, err = sql.Open("postgres", connStr2)
 	if err != nil {
 		log.Fatal("Failed open database ", err)
 	}
@@ -71,4 +74,6 @@ func ConnectDB() {
 		log.Printf("Failed to create table Reviews: %v", err)
 		return
 	}
+
+	fmt.Println("Success connected db")
 }

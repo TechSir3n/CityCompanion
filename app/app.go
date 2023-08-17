@@ -6,7 +6,6 @@ import (
 )
 
 func StartTGBot() {
-	database.ConnectDBRailway()
 	database.ConnectDB()
 	api.TGBot()
 
