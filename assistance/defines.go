@@ -7,6 +7,8 @@ type Commands struct {
 
 	Menu string
 
+	MenuS string
+
 	Coordinates string
 
 	Radius string
@@ -30,6 +32,7 @@ func NewComnands() *Commands {
 		GetLocation:   "/getmylocation",
 		FavoritePlace: "/favoriteplace",
 		SavedPlace:    "/savedplaces",
+		MenuS:         "/showmenu",
 		AdjustRadius:  "/adjustradius",
 		Menu:          "❗️Показать меню",
 		Coordinates:   "📍 Поделится с кординатами местоположения",

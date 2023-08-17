@@ -10,7 +10,6 @@ import (
 
 func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.UpdatesChannel) {
 	commands := assistance.NewComnands()
-	var msgN tgbotapi.MessageConfig
 	var msg tgbotapi.MessageConfig
 
 	inlineKeyboard := tgbotapi.NewInlineKeyboardMarkup(
@@ -29,9 +28,13 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 		msg.ReplyMarkup = createMainMenu()
 		bot.Send(msg)
 	case commands.Menu:
-		msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
-		msgN.ReplyMarkup = createNeedAction()
-		bot.Send(msgN)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
+		msg.ReplyMarkup = createNeedAction()
+		bot.Send(msg)
+	case commands.MenuS:
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
+		msg.ReplyMarkup = createNeedAction()
+		bot.Send(msg)
 	case commands.Coordinates:
 		AskCoordinates(bot, update, updates)
 	case commands.Radius:
@@ -39,9 +42,9 @@ func commandsBot(bot *tgbotapi.BotAPI, update tgbotapi.Update, updates tgbotapi.
 	case commands.About:
 		assistance.AboutBot(bot, update)
 	case commands.Menu:
-		msgN = tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
-		msgN.ReplyMarkup = createNeedAction()
-		bot.Send(msgN)
+		msg := tgbotapi.NewMessage(update.Message.Chat.ID, "Выберите нужное действие: ")
+		msg.ReplyMarkup = createNeedAction()
+		bot.Send(msg)
 	case commands.SendLocation:
 		AskCoordinates(bot, update, updates)
 	case commands.GetLocation:
